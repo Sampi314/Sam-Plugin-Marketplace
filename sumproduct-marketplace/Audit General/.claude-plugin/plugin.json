@@ -1,0 +1,9 @@
+{
+  "name": "audit-general",
+  "version": "1.0.0",
+  "description": "SumProduct Excel model audit suite for Claude Code: an orchestrated family of specialist auditors covering formula logic, technical errors, formatting consistency, spelling and terminology, formula efficiency, structural integrity, hyperlinks, VBA and Power Query — consolidated into a single professional audit report. Includes a shared workbook extractor, dependency mapping and plain-English model documentation.",
+  "author": {
+    "name": "SumProduct",
+    "email": "contact@sumproduct.com"
+  }
+}

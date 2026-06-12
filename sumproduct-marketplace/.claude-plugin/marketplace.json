@@ -1,0 +1,23 @@
+{
+  "name": "sumproduct",
+  "owner": {
+    "name": "SumProduct",
+    "email": "contact@sumproduct.com"
+  },
+  "metadata": {
+    "description": "SumProduct's financial modelling and Excel audit skills for Claude Code",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "financial-modelling",
+      "source": "./Financial Modelling",
+      "description": "The SumProduct CRaFT financial model build lifecycle: orchestrated Scope, Plan, Design, Build, Test and Implement phases for constructing Excel financial models."
+    },
+    {
+      "name": "audit-general",
+      "source": "./Audit General",
+      "description": "The SumProduct Excel model audit suite: a coordinated family of specialist auditors (logic, errors, formatting, language, efficiency, structure, hyperlinks, VBA, Power Query) with an orchestrating audit manager and client-ready reporting."
+    }
+  ]
+}
