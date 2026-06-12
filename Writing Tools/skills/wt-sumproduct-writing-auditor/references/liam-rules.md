@@ -109,6 +109,14 @@ Rules are grouped into six categories:
 
 ## A. FORMATTING RULES
 
+### A0. Default Is NOT Bold
+
+Most prose is plain text. **Bold is reserved for the specific cases listed in the rules below** (function names, argument names, key technical terms, field / column / cell references, inline formula expressions, programming languages, syntax lines, example sub-headings).
+
+If a word does not fall into one of those categories, do not bold it — no matter how important it feels in the moment. When auditing, default to *removing* bold rather than *adding* it.
+
+This is the master principle of SumProduct's bold convention. Liam: "Take care with what you embolden. Most other things are not [bold]."
+
 ### A1. Bold: Languages vs Feature Names
 
 The programming languages **DAX** and **M** are bold when referenced as languages:
@@ -149,6 +157,20 @@ When a remark or explanation highlights a key **DAX** technical term that is cen
 
 Apply sparingly — only bold terms that are the core concept of the remark (*e.g.*, "context" in a remark about context modification), not every technical word.
 
+### A2d. Field Names, Column References and Cell References — Bold
+
+Bold these three categories whenever they appear in running prose:
+
+- **Field names** — column headings in a data table or PivotTable: **Sales Amount**, **Customer ID**, **Order Date**
+- **Column references** — bracketed-name column references in DAX or Power Query: **[Sales Amount]**, **[Customer ID]**, **[Quantity]**
+- **Cell references** — Excel cell addresses, ranges, and named ranges: **A1**, **$B$3:$C$10**, **Total_Sales**
+
+This extends A2 / A2b / A2c — together they cover function names, argument names, key technical terms, and now field / column / cell references. The common thread: anything the reader needs to find in the underlying workbook should be bold.
+
+Common miss: cell references in casual mentions ("then enter the formula in cell A1") are routinely left un-bold. Bold them: "then enter the formula in cell **A1**".
+
+Inside code blocks and formula syntax, references stay as written — this rule applies to *running prose* only.
+
 ### A3. TRUE and FALSE — Capitalised but NOT Bold
 
 TRUE and FALSE are Boolean values:
@@ -159,6 +181,19 @@ TRUE and FALSE are Boolean values:
 
 *i.e.* and *e.g.* must always be in italics with periods.
 Also: *viz.*, *etc.*
+
+### A4b. Latin Abbreviations — No Comma After
+
+Do not follow *i.e.*, *e.g.*, *viz.* or *etc.* with a comma.
+
+- ✓ "the function rejects empty strings, *i.e.* zero-length values"
+- ✗ "the function rejects empty strings, *i.e.*, zero-length values"
+- ✓ "use a list-validation function, *e.g.* DataValidation"
+- ✗ "use a list-validation function, *e.g.*, DataValidation"
+- ✓ "wrap arguments, *etc.* before saving"
+- ✗ "wrap arguments, *etc.*, before saving"
+
+Typical American / Chicago style does insert a comma after — this house rule overrides it. A comma *before* the Latin abbreviation may still appear where the sentence's syntax requires it; the rule only forbids the comma after.
 
 ### A5. Error Values — Always Italic
 
@@ -408,11 +443,24 @@ Use "whilst" when expressing contrast or alternatives:
 
 "While" remains acceptable for temporal/simultaneous meaning (*e.g.*, "listen while NotebookLM generates").
 
-### C6. "However," Not "But" at Sentence Start
+### C6. "However" Only at the Start of a Clause; "But" Mid-Sentence
 
-Do not begin a sentence with "But". Use "However," instead:
+"However" is a conjunctive adverb, not a coordinating conjunction. Use it **only at the start of a clause** — either the start of a sentence, or immediately after a semicolon. In the middle of a sentence between two independent clauses, use "but" instead.
+
+**At sentence start — use "However,":**
 - ✓ "However, it can remove hours of manual effort"
 - ✗ "But it can remove hours of manual effort"
+
+**After a semicolon — use "; however,":**
+- ✓ "Lucy's grammar is terrible; however, with practice, her use of conjunctive adverbs should improve."
+- ✗ "Lucy's grammar is terrible, however, with practice, her use of conjunctive adverbs should improve."
+
+**Mid-sentence between two independent clauses — use "but" instead of "however":**
+- ✓ "Liam tells extremely funny jokes but no one ever laughs."
+- ✗ "Liam tells extremely funny jokes however no one ever laughs."
+- ✗ "Liam tells extremely funny jokes, however, no one ever laughs."
+
+**Quick test:** if "however" sits between two independent clauses without a semicolon immediately before it, replace it with "but". If a sentence opens with "But", replace it with "However,".
 
 ### C7. "Simply" Not "Just" (as Filler)
 

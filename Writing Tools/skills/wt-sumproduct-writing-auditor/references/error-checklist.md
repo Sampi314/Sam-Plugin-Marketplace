@@ -274,6 +274,8 @@ Two independent clauses joined by comma → upgrade to semicolon.
 | analyze | analyse |
 | optimize | optimise |
 
+**Quick audit tip (Liam):** the fastest US-English detector is `Ctrl + F` for the letter `z` in any draft article. Most US spellings differ from British by a `z` in place of `s` (organize → organise, categorize → categorise) — searching for the letter surfaces them in seconds. Walk every hit; allow `z` only in words that are genuinely spelled with `z` in British English (*e.g.*, "size", "zero", "freeze", "zone") or in proper nouns / code identifiers.
+
 ### 5.2 Homophones
 
 | Error | Correct | Source |
