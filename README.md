@@ -1,8 +1,8 @@
-# SumProduct Marketplace
+# Sam Plugin Marketplace
 
-Claude Code plugin marketplace from [SumProduct](https://www.sumproduct.com) —
-financial modelling and Excel model audit skills built around the CRaFT
-methodology (Consistency, Robustness, Flexibility, Transparency).
+Claude Code plugin marketplace from Sam — financial modelling and Excel model
+audit skills built around the CRaFT methodology (Consistency, Robustness,
+Flexibility, Transparency).
 
 ## Plugins
 
@@ -19,7 +19,7 @@ invokes the audit-general specialists. Install both for the full workflow.
 Directly from GitHub:
 
 ```
-/plugin marketplace add Sampi314/Sumproduct_Plugin_Marketplaces
+/plugin marketplace add Sampi314/Sam-Plugin-Marketplace
 ```
 
 Or from a local clone:
@@ -31,8 +31,8 @@ Or from a local clone:
 Then install the plugins:
 
 ```
-/plugin install financial-modelling@sumproduct
-/plugin install audit-general@sumproduct
+/plugin install financial-modelling@sam
+/plugin install audit-general@sam
 ```
 
 ## Requirements

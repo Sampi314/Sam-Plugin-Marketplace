@@ -26,7 +26,7 @@ Define every visual and structural specification the model needs — Cell Styles
 ## Important Reference
 
 Before designing, read:
-1. `references/sumproduct_styles.md` — Complete specification of all 30 Cell Styles extracted from production SumProduct models, with RGB and BGR colour values, pywin32 code, and IncludeNumber flags
+1. `references/sam_styles.md` — Complete specification of all 30 Cell Styles extracted from production Sam models, with RGB and BGR colour values, pywin32 code, and IncludeNumber flags
 2. `references/validation_and_formats.md` — Complete catalogue of Data Validation rules by input type and Number Format strings with usage guide (COM constants live in `../fm-4-build/references/com_reference.md`)
 3. `references/design_template.md` — the exact structure `design.md` must follow; this is the Phase 4 input contract
 
@@ -34,11 +34,11 @@ Before designing, read:
 
 ### 1. DEFINE CELL STYLES
 
-SumProduct models use **Excel Cell Styles** (not direct formatting). Every cell gets a Named Style applied via the Cell Styles gallery (Home → Cell Styles → Custom section).
+Sam models use **Excel Cell Styles** (not direct formatting). Every cell gets a Named Style applied via the Cell Styles gallery (Home → Cell Styles → Custom section).
 
 The 30-style register and the pywin32 `create_all_styles(wb)` function live in:
 
-- `references/sumproduct_styles.md` — the human-readable style register (colours, fonts, purpose).
+- `references/sam_styles.md` — the human-readable style register (colours, fonts, purpose).
 - `references/style_creation_code.md` — the pywin32 code that creates them, the style application rules table, and the Assumption-style trap example.
 
 **Key rules:**

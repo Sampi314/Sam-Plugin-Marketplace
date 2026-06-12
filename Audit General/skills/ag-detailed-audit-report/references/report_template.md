@@ -9,7 +9,7 @@ Findings tables use the consolidated columns from
 # Detailed Audit Report: [Model Name]
 
 **Date:** [date]
-**Auditor:** SumProduct AI Audit Suite
+**Auditor:** Sam AI Audit Suite
 **File:** [filename]
 **Sheets Audited:** [count] ([list or "All"])
 

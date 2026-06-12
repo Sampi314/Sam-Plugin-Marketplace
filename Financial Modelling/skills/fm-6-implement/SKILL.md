@@ -48,7 +48,7 @@ Use `protect_output_sheet` for Calculations and the financial statements
 (unlock the yellow Assumption cells first). Both helpers are in
 `references/finalisation_code.md`.
 
-SumProduct convention: protection uses an **empty-string password**. See the
+Sam convention: protection uses an **empty-string password**. See the
 reference for the rationale.
 
 ### 3. PRODUCE DOCUMENTATION

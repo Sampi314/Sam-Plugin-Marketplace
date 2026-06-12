@@ -60,7 +60,7 @@ If the user seems unsure about structure, offer 2–3 example model archetypes:
 
 ### Round 2: ROUTE TO THE RIGHT QUESTIONS
 
-**Most SumProduct engagements are NOT 3-statement integrated models.** The
+**Most Sam engagements are NOT 3-statement integrated models.** The
 question library covers 13 model types — budget, commission, cost allocation,
 cashflow forecast, dashboard/reporting, M&A/LBO, model optimisation, operational,
 valuation/DCF, project finance, and standard 3-statement.

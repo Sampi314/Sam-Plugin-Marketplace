@@ -36,7 +36,7 @@ an artefact existing on disk is not confirmation.
 |-------|-------|----------|--------|----------------|------|-------|
 | 1. Scope | fm-1-scope | scope.md | Complete | Y | 2026-06-12 | DCF, 10-year horizon, quarterly |
 | 2. Plan | fm-2-plan | plan.md | Complete | Y | 2026-06-12 | 14 sheets; WACC build-up on Gen Assumptions |
-| 3. Design | fm-3-design | design.md | Complete | Y | 2026-06-13 | 30 SumProduct Cell Styles; 25 named ranges |
+| 3. Design | fm-3-design | design.md | Complete | Y | 2026-06-13 | 30 Sam Cell Styles; 25 named ranges |
 | 4. Build | fm-4-build | TechCorp_DCF.xlsx | Complete | Y | 2026-06-14 | Built via pywin32; 2 fix passes applied |
 | 5. Test | fm-5-test | test_report.md | In progress | N | 2026-06-15 | Pass 2 running; see pass counter below |
 | 6. Implement | fm-6-implement | delivery package | Pending | — | — | — |

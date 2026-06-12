@@ -1,7 +1,7 @@
 ---
 name: fm-orchestrator
 description: >
-  Orchestrate the 6-phase financial model build lifecycle following SumProduct
+  Orchestrate the 6-phase financial model build lifecycle following Sam
   CRaFT methodology. Coordinates Scope, Plan, Design, Build, Test, and
   Implement phases by invoking dedicated sub-skills (fm-1-scope through
   fm-6-implement) at the right moments, carrying state between them. Use this
@@ -18,7 +18,7 @@ description: >
 
 ## Mission
 
-Orchestrate the complete financial model build lifecycle using SumProduct's
+Orchestrate the complete financial model build lifecycle using Sam's
 CRaFT methodology (Consistency, Robustness, Flexibility, Transparency) across
 six phases, each handled by a dedicated sub-skill.
 
@@ -72,7 +72,7 @@ ad-hoc log formats break resumption.
 
 ## Model-type awareness
 
-**Most SumProduct engagements are not 3-statement integrated models.**
+**Most Sam engagements are not 3-statement integrated models.**
 The canonical registry of all 13 model types — skeletons, calculation
 patterns, type-specific checks, complexity scaling — is
 `../_fm-shared/references/model_types.md`. Phase 1 (`fm-1-scope`) routes scope

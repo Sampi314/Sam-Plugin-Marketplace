@@ -27,7 +27,7 @@ auditors) know exactly which scope and plan this design implements.
 Why: Build creates every style before any sheet content (styles with
 `IncludeNumber=True` overwrite number formats set earlier), so it needs the
 complete adopted register in one table. Adopt from the 30-style register in
-`sumproduct_styles.md`; the "Based On" column records the register entry so
+`sam_styles.md`; the "Based On" column records the register entry so
 any deviation is visible at a glance.
 
 | Style Name | Based On | Font | Fill BGR | Number Format | Usage |

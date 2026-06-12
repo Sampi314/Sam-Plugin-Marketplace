@@ -120,7 +120,7 @@ auditors use COM scripts (Windows + Excel) instead of `extract.json`.
 
 **Key rule**: R1C1 notation is MANDATORY in all formula-related findings
 
-**SumProduct-specific checks**:
+**Sam-specific checks**:
 - Units column (G) should reference named ranges (`=Currency`), not contain text
 - Section numbering should use `MAX($B$x:$By)+1` pattern
 - Financial statement rows should contain simple links to Calculations, not new logic
@@ -141,8 +141,8 @@ auditors use COM scripts (Windows + Excel) instead of `extract.json`.
 
 **Expected output**: Style Convention Summary (detection method, confidence per cell type) PLUS findings table
 
-**SumProduct-specific checks**:
-- All 30 custom Cell Styles must exist in `wb.Styles` (list in `fm-3-design/references/sumproduct_styles.md`)
+**Sam-specific checks**:
+- All 30 custom Cell Styles must exist in `wb.Styles` (list in `fm-3-design/references/sam_styles.md`)
 - Assumption cells must use `Assumption` style (yellow fill #FFFF99)
 - Heading rows must use `Heading 1 Text` / `Heading 1 Number` styles
 - Date headers must use `Date Heading` style with `mmm yy` format
@@ -166,7 +166,7 @@ auditors use COM scripts (Windows + Excel) instead of `extract.json`.
 
 **Expected output**: Summary statistics (total formulas, Mega-Formulas by tier, volatile count) PLUS findings table
 
-**SumProduct-specific check**:
+**Sam-specific check**:
 - Calculations sheet should have a FORMULATEXT audit column (column P) — flag if missing
 
 ---
@@ -184,7 +184,7 @@ auditors use COM scripts (Windows + Excel) instead of `extract.json`.
 
 **Expected output**: Findings table. Categories: Typo, Grammar, Inconsistent Naming, Dominant Term Mismatch, Missing Label
 
-**SumProduct-specific checks**:
+**Sam-specific checks**:
 - Sheet tab names should match Navigator TOC entries
 - Row labels on Calculations should be linked (formulas), not retyped
 - Named range descriptions (column I on Model Parameters) should match the range names
@@ -223,7 +223,7 @@ alignment.
 3. Validate targets — does destination exist, is it non-blank, does display text match?
 4. Cross-check — orphaned sheets, duplicate targets, circular navigation
 
-**SumProduct-specific checks**:
+**Sam-specific checks**:
 - Navigator sheet must link to every content sheet
 - Every sheet row 3 must have 5 Navigator return links
 - Error Checks sheet must hyperlink to each individual check cell on BS/CFS

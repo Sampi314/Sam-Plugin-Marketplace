@@ -266,7 +266,7 @@ Apply `Row Ref` style.
 
 ## 6. Control Account Pattern
 
-SumProduct uses a standard control account for every balance sheet item:
+Sam uses a standard control account for every balance sheet item:
 
 ```
 Opening balance
@@ -457,7 +457,7 @@ This is copied down for every calculation row. It allows auditors to see the for
 ## 11. Common Formula Techniques
 
 ### Avoiding Circular References
-SumProduct NEVER uses circular references. Interest calculations that might create circularity (interest on cash balance which depends on interest) are broken using:
+Sam NEVER uses circular references. Interest calculations that might create circularity (interest on cash balance which depends on interest) are broken using:
 - Sequential calculation (calculate interest on prior period balance)
 - Average balance approximation
 - Or iterative convergence with a counter
@@ -504,7 +504,7 @@ J9 = N(I9) + 1
 ```
 
 ### Dynamic Arrays (Modern Excel)
-SumProduct's newer models use dynamic array formulas that spill across periods:
+Sam's newer models use dynamic array formulas that spill across periods:
 ```excel
 ' Single formula in J5 that spills to fill all period columns
 J5 = {array formula that generates all period dates}

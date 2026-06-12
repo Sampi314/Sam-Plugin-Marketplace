@@ -1,10 +1,10 @@
-# SumProduct Cell Styles Reference
+# Sam Cell Styles Reference
 
-> Extracted from production SumProduct models (16_-sp-case-study-final-model.xlsm, Model_13_-_Financial_Modelling_Exercise_Final.xlsm) and verified against the Excel Cell Styles gallery screenshot.
+> Extracted from production Sam models (16_-sp-case-study-final-model.xlsm, Model_13_-_Financial_Modelling_Exercise_Final.xlsm) and verified against the Excel Cell Styles gallery screenshot.
 
 ## Excel Cell Styles Gallery (Custom Section)
 
-The following 30 styles appear in Home → Cell Styles → Custom in every SumProduct model:
+The following 30 styles appear in Home → Cell Styles → Custom in every Sam model:
 
 ```
 Row 1: Accounts Ref | Assumption | Constraint | Date | Date Heading | Empty
@@ -82,7 +82,7 @@ The number format `"ý";"ý";"þ"` uses Wingdings characters:
 - Negative value → displays `ý` (tick ✓) 
 - Zero → displays `þ` (cross ✗)
 
-Wait — this is reversed in SumProduct's convention. The format shows:
+Wait — this is reversed in Sam's convention. The format shows:
 - **0 → tick (pass)** via the third format segment
 - **Non-zero → cross (fail)** via the first/second segments
 

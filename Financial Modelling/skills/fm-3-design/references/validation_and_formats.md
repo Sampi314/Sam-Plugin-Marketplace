@@ -1,6 +1,6 @@
 # Validation & Number Format Catalogue
 
-> Complete catalogue of Data Validation rules and Number Format strings used in SumProduct models.
+> Complete catalogue of Data Validation rules and Number Format strings used in Sam models.
 
 ## Data Validation Rules
 

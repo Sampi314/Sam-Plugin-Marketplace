@@ -1,4 +1,4 @@
-"""Build the sumproduct-marketplace plugin folders from .claude/skills.
+"""Build the sam-plugin-marketplace plugin folders from .claude/skills.
 
 Copies the live (post-overhaul) skills into the two plugins, applies the ag-*
 renames for Audit General, rewrites cross-references, and reports every
@@ -18,7 +18,7 @@ for _s in (sys.stdout, sys.stderr):
     except (AttributeError, ValueError):
         pass
 
-ROOT = Path(__file__).resolve().parent          # sumproduct-marketplace/
+ROOT = Path(__file__).resolve().parent          # sam-plugin-marketplace/
 SKILLS = ROOT.parent / ".claude" / "skills"
 FM_DEST = ROOT / "Financial Modelling" / "skills"
 AG_DEST = ROOT / "Audit General" / "skills"
@@ -112,7 +112,7 @@ def main() -> int:
     text = pointer.read_text(encoding="utf-8")
     note = ("\n> **Plugin note:** the audit skills above ship in the separate "
             "**audit-general** plugin — install it alongside this one "
-            "(`/plugin install audit-general@sumproduct`) so fm-5-test can run "
+            "(`/plugin install audit-general@sam`) so fm-5-test can run "
             "the audit suite. The shared standards file is bundled with both "
             "plugins at `skills/_excel-shared/references/audit_standards.md`.\n")
     if "Plugin note" not in text:

@@ -1,9 +1,8 @@
 {
   "name": "financial-modelling",
   "version": "1.0.0",
-  "description": "SumProduct CRaFT financial model lifecycle for Claude Code: a six-phase, orchestrated workflow (Scope, Plan, Design, Build, Test, Implement) that takes an Excel financial model from requirements gathering to client-ready delivery, following SumProduct's CRaFT methodology (Consistency, Robustness, Flexibility, Transparency).",
+  "description": "CRaFT financial model lifecycle for Claude Code: a six-phase, orchestrated workflow (Scope, Plan, Design, Build, Test, Implement) that takes an Excel financial model from requirements gathering to client-ready delivery, following Sam's CRaFT methodology (Consistency, Robustness, Flexibility, Transparency).",
   "author": {
-    "name": "SumProduct",
-    "email": "contact@sumproduct.com"
+    "name": "Sam"
   }
 }

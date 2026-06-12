@@ -46,7 +46,7 @@ Before building, read:
 
 Also read the Design skill's references:
 - `../fm-3-design/references/style_creation_code.md` — `create_all_styles(wb)` and the style application rules
-- `../fm-3-design/references/sumproduct_styles.md` — human-readable Cell Style register
+- `../fm-3-design/references/sam_styles.md` — human-readable Cell Style register
 - `../fm-3-design/references/validation_and_formats.md` — Data Validation rules and number formats
 
 ## Process

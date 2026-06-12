@@ -57,7 +57,7 @@ for name in ["Calculations", "Income Statement", "Balance Sheet",
 
 ## Why no password
 
-SumProduct's convention is **empty-string passwords**. The protection is to
+Sam's convention is **empty-string passwords**. The protection is to
 prevent accidental edits, not to defend against deliberate tampering — clients
 need to be able to unprotect for their own audit. A password creates a support
 burden when the client inevitably needs it.
