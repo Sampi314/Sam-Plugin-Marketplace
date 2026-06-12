@@ -30,6 +30,14 @@ fm-4-build consumes the script's output (a clean starter workbook) and adds mode
 2. Encode every convention as a **mechanical rule in the script** — so every workbook the script produces looks the same.
 3. Make the script idempotent and parameterisable: callable to produce a clean starter workbook on demand, with optional sheet inclusions per project.
 
+## Token economy principle for the reference layout (per Sam)
+
+A skill is invoked when Claude meets a problem and needs to decide what to do. To keep Claude's read minimal and token cost low:
+
+- **SKILL.md = thin decision router.** "When you need X, read `references/y.md`." No prose-heavy explanation; just signposting per decision point.
+- **References = many small, single-topic files.** Each file answers exactly one question: column widths / freeze pane rule / heading staircase / H1 band / named-range convention / etc. Claude opens *only* the file relevant to the current sub-task, never the full set.
+- This is the opposite of "one fat reference per area". `cf_and_column_layout.md` in the current skill bundles six topics into one file — it forces Claude to read all six when only one is needed. The split version below addresses this.
+
 ## Non-goals
 
 - Refactoring file structure (Approach C — stays as 5 references + new `scripts/`).
@@ -148,9 +156,20 @@ The matrix is **not exhaustive** — it captures the canonical pairings. New com
 2. Add the new row to this matrix specifying its purpose and which pass it belongs to.
 3. Re-run `create_styles_and_guide.py` to populate the Style Guide sheet in every new workbook.
 
-### 4. `references/cf_and_column_layout.md` — major expansion
+### 4. Split `cf_and_column_layout.md` into single-topic references
 
-Add four new sections, plus correct the existing column-layout table.
+Per the token economy principle above, the current `cf_and_column_layout.md` is broken into focused files. Claude opens one per question.
+
+- `column_widths.md` — sheet-class column-width table (was §4a)
+- `freeze_pane_rule.md` — the mechanical "one row below Heading 1" rule (was §4b)
+- `heading_staircase.md` — staircase pattern + the 2-blank-row inter-section spacing (was §4c + §4c.1)
+- `heading_1_band.md` — H1 cover area rule (B to last-used col + 1) (was §4d)
+- `named_range_convention.md` — `N_*` / `HL_NNN` prefixes (was §4e)
+- `conditional_formatting.md` — CF rules including cell-by-cell application (was the original CF half + §4f)
+
+The original `cf_and_column_layout.md` is deleted. Each new file is short (10–40 lines) and self-contained.
+
+The content originally planned for cf_and_column_layout.md expansion is:
 
 #### 4a. **Column widths by sheet class** (replaces the current "uniform A-J grid" table)
 
