@@ -1,0 +1,8 @@
+{
+  "name": "writing-tools",
+  "version": "1.0.0",
+  "description": "SumProduct editorial toolkit for Claude Code: writes and audits publications in Liam Bastick's editorial voice. Includes a DAX blog article writer, a book-length prose writer for the 'Introduction to Financial Modelling' / 'Continuing Financial Modelling' style, and a comprehensive auditor that checks any SumProduct article against Liam's UK English + SumProduct house rules (grammar, formatting, technical accuracy, tone, structure) and produces tracked-changes Word output.",
+  "author": {
+    "name": "Sam"
+  }
+}
