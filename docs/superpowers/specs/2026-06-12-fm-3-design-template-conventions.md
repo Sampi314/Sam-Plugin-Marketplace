@@ -7,19 +7,36 @@
 
 ## Background
 
-The user reviewed `fm-3-design/SKILL.md` and identified eight conventions that the current references either omit, mis-state, or only partially cover. The `SP Template Model vSN.xlsm` was inspected with openpyxl to derive concrete rules from the live template; this spec captures the findings, the proposed encoding into fm-3-design, and the new extract/create scripts that will keep the references in sync with future template revisions.
+The user reviewed `fm-3-design/SKILL.md` and identified eight conventions that the current references either omit, mis-state, or only partially cover. The `SP Template Model vSN.xlsm` was inspected with openpyxl to derive concrete rules from the live template.
+
+**Strategic frame:** fm-3-design has **two equal first-class deliverables** that stay in sync — the reference markdowns AND the scripts. Neither subordinates the other.
+
+| Deliverable | Who reads it | Role |
+|---|---|---|
+| **Reference markdowns** (`sumproduct_styles.md`, `cf_and_column_layout.md`, `style_application_matrix.md`, `validation_and_formats.md`, `design_template.md`, `style_creation_code.md`) | **Claude** — at design-phase conversation time. **Humans** — when editing conventions. | The canonical *spec*. What every workbook should look like, by rule. |
+| **`build_template_workbook.py`** | **The user / fm-4-build** — invoked to produce a clean starter workbook on demand. | The canonical *implementation*. Every workbook the script produces obeys the spec. |
+| **`extract_from_template.py`** | **Sam** — when the template evolves (new client style, revised column width). | The synchronisation tool. Run against any new template, diff against the references, update references. |
+
+Why both first-class:
+- **References without script** would force fm-4-build to re-implement style creation, freeze pane logic, and column widths every time — drift inevitable.
+- **Script without references** would mean Claude has no spec to read during design conversations and would have to read Python to answer "what's the freeze pane on a periodic sheet?".
+- **Both together** means Claude answers from markdown, the user builds from script, and the extract tool keeps them in sync against the real template.
+
+fm-4-build consumes the script's output (a clean starter workbook) and adds model-specific content. It does not re-derive column widths, freeze panes, or styles — those are baked in.
 
 ## Goals
 
-1. Make the references match the live template exactly (no drift).
-2. Encode every convention as a **mechanical rule** rather than a per-sheet listing — so fm-4-build can apply rules generically rather than reading a sheet-by-sheet config.
-3. Add `scripts/` to fm-3-design so the template stays the canonical source: `extract_from_template.py` regenerates the references, and `create_styles_and_guide.py` builds the 41 styles + Style Guide sheet in any target workbook.
+1. Make the script and references match the live template exactly (no drift).
+2. Encode every convention as a **mechanical rule in the script** — so every workbook the script produces looks the same.
+3. Make the script idempotent and parameterisable: callable to produce a clean starter workbook on demand, with optional sheet inclusions per project.
 
 ## Non-goals
 
 - Refactoring file structure (Approach C — stays as 5 references + new `scripts/`).
 - Migrating the design phase to a different output format.
-- Building the periodic-sheet content beyond column widths + freeze pane.
+- Building the periodic-sheet **content** below Heading 1 (assumption rows, calculation rows etc.) — that belongs to fm-4-build.
+- Backwards-compatibility with existing vSN-built models — the script produces new clean workbooks; existing models keep working as-is.
+- A bug-report or migration tool for existing models (vSN deviations are not in scope; the script just does it right).
 
 ---
 
@@ -179,6 +196,19 @@ Row N+4     D or E = Heading 3 Text  (indented one more column)
 - The staircase is **column-indented** (B → C → D → E) and **row-spaced** (with one blank row between levels).
 - The `Heading N Number` style only appears on Heading 1 — it auto-numbers section numbers via the `=MAX` formula.
 
+#### 4c.1 **Inter-section spacing rule** — NEW
+
+Between the end of one Heading 1 section and the start of the next, leave **two blank rows**. So if Section 1 ends at row N (its last data row), Section 2's Heading 1 row is at row N+3.
+
+```
+Row M        Section 1 last content row
+Row M+1      blank
+Row M+2      blank
+Row M+3      Section 2 Heading 1   (B = next section number, C..end = Heading 1 Text band)
+```
+
+This rule applies across the whole working sheet — the build script computes Heading 1 positions by accumulating section heights plus the 2-row spacer between each.
+
 #### 4d. **Heading 1 cover area rule (band length)** — NEW
 
 The Heading 1 cover area is the band of cells styled `Heading 1 Text` that runs across the heading row.
@@ -251,67 +281,99 @@ CF rules are applied **cell-by-cell, not as a single range**. The Error Checks s
 - Resolve theme colour indices to RGB via `xl/theme/theme1.xml`. Fall back to `th{n}` label if resolution fails.
 - Emit Markdown tables, sorted by style name alphabetically.
 
-### `scripts/create_styles_and_guide.py`
+### `scripts/build_template_workbook.py` — PRIMARY DELIVERABLE
 
-**Purpose:** Apply the 41-style register to a target workbook AND build the `Style Guide` sheet.
+**Purpose:** Produce a clean starter workbook containing every fm-3-design convention applied correctly. fm-4-build takes this workbook and adds model-specific content; it does not re-derive conventions.
 
-**Inputs:** `--workbook path/to/target.xlsm` (or open `wb` object from caller).
+**Inputs:**
+- `--output path/to/new_model.xlsx` (required)
+- `--sheets <list>` (optional — which standard sheets to include; default = all)
+- `--register references/sumproduct_styles.md` (optional — alternative style register)
 
-**Process:**
-1. Parse `sumproduct_styles.md` — extract the 41-style register table into a Python list of style specs.
-2. For each spec, create an `openpyxl.styles.NamedStyle` with Font / Fill / Border / Alignment / Protection / NumberFormat set per the spec's tick state. Add to workbook (`wb.add_named_style(ns)`).
-3. Create a `Style Guide` sheet if it doesn't exist (or update if it does).
-4. Build the Style Guide sheet in three sections:
-   - **Formatting of Headers / Dividers** — rows 6 H1, 8 table header, 10–20 style rows (Sheet Title, Model Name, Header 1-4, Notes, Table Heading)
-   - **Individual Cell Styles** — H1 row 23, table header row 25, data rows 27+ (Assumption, Constraint, Empty, Error Check, Hyperlink, Internal Ref, Line Calc, Line Total, Parameter, Range Name Description, Row Ref, Row Summary, Units, WIP)
-   - **Numerical Styles** — H1 row, table header, data rows (Comma, Comma [0], Currency, Currency [0], Date, Date Heading, Numbers 0, Per cent)
-5. Each style row: C column = Description (Normal style), I column = live example (the named style itself, so it displays), K column = Style Name (Normal style).
-6. Apply the H1 cover area rule: `Heading 1 Text` from B to last-used column + 1.
-7. Apply column widths: A=3.7, F=9.1, H=1.7, I=17.3, J=1.7, K=23.4, N=1.7.
-8. Set freeze pane = `A6`.
+**Process (executed in this order — order matters because of IncludeNumber and the H1-band-after-data rule):**
+
+#### Phase A — Style creation (must come first)
+
+1. Parse `sumproduct_styles.md` — extract the 41-style register into Python `StyleSpec` dataclass instances (font, fill, border, alignment, protection, number_format, tick state per group).
+2. For each spec, create `openpyxl.styles.NamedStyle` with only the property groups whose tick state is TRUE. Add via `wb.add_named_style(ns)`.
+3. Catch `KeyError` on duplicate names — idempotent.
+
+#### Phase B — Skeleton sheets
+
+For each standard sheet (default list: Cover, Navigator, Style Guide, Model Parameters, Timing, Error Checks, Change Log, Timing Template, No Timing Template):
+
+1. Create sheet if it doesn't exist.
+2. **A1**: `Sheet Title` style + formula `=IF(ISERROR(RIGHT(CELL("filename",A2),LEN(CELL("filename",A2))-FIND("]",CELL("filename",A2)))),"",RIGHT(CELL("filename",A2),LEN(CELL("filename",A2))-FIND("]",CELL("filename",A2))))` (extracts sheet name from file path).
+3. **A2**: `Model Name` style + value `=N_Model_Name`.
+4. **A3**: `Hyperlink` style + value `"Navigator"` + `location='HL_Navigator'`. Merge `A3:E3`. Skip on Navigator itself (no self-link).
+5. **Column widths** per sheet class (Cover / Navigator / Static / Periodic / Style Guide — see §4a).
+6. **Freeze pane** per mechanical rule (§4b): `A6` for static, `J11` for periodic, none for Cover.
+
+#### Phase C — Named ranges
+
+1. Register `HL_Navigator` → `Navigator!$A$1`.
+2. For each sheet in tab order, register `HL_NNN` (NNN = 3-digit zero-padded index) → `<SheetName>!$A$3`.
+3. Register the `N_*` constants on Model Parameters and Timing per the standard list (Model_Name, Client_Name, Days_in_Year, Months_in_Month/Qtr/Half_Yr/Year, Quarters_in_Year, Periodicity, Reporting_Month_Factor, Model_Start_Date, Example_Reporting_Month, Rounding_Accuracy, Very_Large_Number, Very_Small_Number, Thousand, Overall_Error_Check).
+4. The cells those names point at receive their values per the standard (most as `Assumption` style with appropriate `Numbers 0` / `Currency` / `Date` format style applied first per the two-pass pattern).
+
+#### Phase D — Heading staircase + Style Guide sheet content
+
+**For each working sheet** (Model Parameters, Timing, Error Checks, Timing Template, No Timing Template):
+
+1. Apply Heading 1 row (row 6 static, row 11 periodic):
+   - B column: `Heading 1 Number` + formula `=MAX($B$prev:$B[N-1])+1`.
+   - C through (last-used-col + 1): `Heading 1 Text` style across the band.
+2. Where the design has sub-sections, apply Heading 2 / Heading 3 at the staircase positions (row +2 indent +1, row +4 indent +1) — but for the bare skeleton, only Heading 1 is required.
+3. Between sections: leave 2 blank rows before the next Heading 1.
+
+**For Style Guide sheet specifically:** populate the three documentation sections (Formatting / Individual / Numerical) per the vSN layout — rows 6/8/10-20, 23/25/27-53, 56/58/60-74 with three columns per row (C = description, I = live example styled with the style, K = style name).
+
+#### Phase E — Verification
+
+1. Open the produced .xlsx with openpyxl, read back, assert:
+   - 41 styles present.
+   - All sheets exist with correct freeze panes.
+   - A3 hyperlinks resolve to `HL_Navigator`.
+   - Style Guide sheet's live-example cells render with the expected styles.
+2. Print a one-line success summary.
 
 **Implementation notes:**
-- Must call `create_styles` **before** any data is populated (IncludeNumber trap — styles with applyNumberFormat=TRUE overwrite cell formats set earlier).
-- The `Assumption` style has applyNumberFormat=FALSE in the vSN template — so applying it doesn't change the cell's number format. This matches the existing `style_creation_code.md` documentation.
-- Use `wb.add_named_style(...)` per style. Catch the duplicate-name exception if the style already exists (idempotent runs).
-
----
-
-## Bugs found in vSN template (for fix in create script)
-
-These are deviations or anomalies that the create script should **not** reproduce; document them so future templates avoid them.
-
-1. **Cover sheet's A3 not merged** — Every other sheet has `A3:E3` merged with the `Navigator` back-link. Cover does not. Either Cover should also have it (for consistency), or the convention should explicitly exclude Cover.
-2. **Navigator's A3 self-links** — `location='HL_Navigator'` resolves to `Navigator!$A$1`, which is the same sheet. Clicking it from Navigator does nothing useful. Recommendation: omit A3 hyperlink on Navigator, or link to Cover.
-3. **Hyperlink mechanism inconsistent** — Cover, Style Guide, Model Parameters, Timing, Error Checks, Change Log, Sam Notes, Timing Template, No Timing Template all use **relationship-based** hyperlinks (`id='rId1'` or `id='rId3'`). Navigator alone uses **location-based** (`location='HL_Navigator'`). Recommendation: standardise on location-based — it survives sheet reorders and copies, where relationship-based can break.
-4. **Error Checks: duplicate CF rule on I12** — two identical `cellIs notEqual 0` rules on the same cell. Likely paste artefact. The create script should write only one.
-
----
-
-## Out of scope
-
-- Implementation of the periodic-sheet content (rows below Heading 1) — that belongs to fm-4-build.
-- Migration of existing models built from vSN.xlsm — that's a one-off Phase 6 task per model.
-- A user-facing diff between the new register and the old register (Liam's review tool) — could be added later as a third script if needed.
+- Phase A must come before any cell value is written (IncludeNumber trap — styles with applyNumberFormat=TRUE that are added later won't retroactively reformat cells, but a style applied to a cell that already has a number format may overwrite it depending on tick state).
+- Phase D's "last-used-col + 1" computation needs the sheet's data extent **after** Phase B/C wrote values — so Heading 1 band styling runs after data writes. This is the inversion of the usual "styles first" rule.
+- Use `wb.add_named_style(...)` per style. Catch `ValueError` on duplicate names so re-runs are idempotent.
+- The script must NOT require Excel to be installed (openpyxl-only). Distinct from `fm-4-build/references/style_creation_code.md` which uses pywin32 / COM for cells that need active Excel features.
 
 ---
 
 ## Success criteria
 
 1. `extract_from_template.py path/to/SP Template Model vSN.xlsm` regenerates `sumproduct_styles.md` containing 41 styles with property matrix + tick states.
-2. `create_styles_and_guide.py path/to/new_model.xlsx` produces a workbook with 41 named styles added AND a `Style Guide` sheet that renders correctly (no `#REF!`, no missing cell styles).
-3. The Style Guide sheet visually matches the vSN template's Style Guide sheet section by section.
-4. The updated `cf_and_column_layout.md` answers all of: "what's the freeze pane on a periodic sheet?", "where does the Heading 1 band end?", "what's the naming convention for an error check cell?".
+2. `build_template_workbook.py --output new_model.xlsx` produces a clean starter workbook with:
+   - All 41 named styles registered, visible in Home → Cell Styles → Custom.
+   - Standard skeleton sheets present: Cover, Navigator, Style Guide, Model Parameters, Timing, Error Checks, Change Log, Timing Template, No Timing Template.
+   - Every sheet has Sheet Title in A1, Model Name in A2, Navigator back-link in A3:E3 (merged, `Hyperlink` style, location-based hyperlink to `HL_Navigator`).
+   - Working sheets have Heading 1 row at the correct row (6 static, 11 periodic) with B = Heading 1 Number (auto-numbering formula), C → last-used-col + 1 = Heading 1 Text band.
+   - Freeze panes set per the mechanical rule (`A6` / `J11` / None).
+   - Column widths set per sheet class (Cover / Navigator / Static / Periodic / Style Guide).
+   - All named ranges (`HL_NNN`, `HL_Navigator`, `N_*` constants) registered.
+   - Style Guide sheet built with three sections (Headers / Individual / Numerical), populated with every style's name, description, and live example.
+3. The output workbook opens cleanly in Excel and matches the vSN template's structure section-by-section (allowing for fixed inconsistencies — A3 merged on Cover, Navigator without self-link).
+4. The updated `cf_and_column_layout.md` answers all of: "what's the freeze pane on a periodic sheet?", "where does the Heading 1 band end?", "what's the naming convention for an error check cell?", "how many blank rows go between sections?".
 5. The fm-3-design SKILL.md still fits within the thin-SKILL.md pattern (under ~120 lines).
+6. The script is **idempotent**: re-running it does not duplicate styles or sheets — it skips items that already exist.
 
 ## Implementation order
 
-1. Build `extract_from_template.py` and run it against vSN. Diff the output against current `sumproduct_styles.md`.
-2. Hand-edit any extraction artefacts (theme colour resolution failures, edge cases). Commit `sumproduct_styles.md` overwrite.
-3. Expand `cf_and_column_layout.md` with the four new sections (4b–4e) + corrected column widths (4a).
-4. Update `design_template.md` with sheet-class column tables + A3 hyperlink convention + freeze pane derivation rule in Section 8.
-5. Update `SKILL.md` Section 2 (named-range prefix) + Section 6 (point to new column widths).
-6. Build `create_styles_and_guide.py`. Test against a clean .xlsx; verify Style Guide sheet renders.
-7. Document the bug list (above) in `cf_and_column_layout.md` as a "Bugs in the vSN template" appendix — so Phase 6 audit checks can flag them.
+1. **Build `extract_from_template.py`** and run it against vSN. Diff the output against current `sumproduct_styles.md`.
+2. **Hand-edit any extraction artefacts** (theme colour resolution failures, edge cases). Commit `sumproduct_styles.md` overwrite.
+3. **Expand `cf_and_column_layout.md`** with the new sections (4a corrected column widths, 4b freeze pane rule, 4c heading staircase, 4c.1 two-row inter-section spacing, 4d H1 band rule, 4e named-range convention, 4f CF correction).
+4. **Add `style_application_matrix.md`** (NEW reference) with the cell-purpose → (Pass 1 + Pass 2) mapping table.
+5. **Update `design_template.md`** with sheet-class column tables + A3 hyperlink convention + freeze pane derivation rule in Section 8.
+6. **Update `SKILL.md`** Section 2 (named-range prefix) + Section 6 (point to new column widths) + Section 6.5 (NEW: heading staircase and freeze pane). Position the script as the primary deliverable.
+7. **Build `build_template_workbook.py`** in three phases:
+   a. Style creation (41 styles + Style Guide sheet) — verify against vSN.
+   b. Skeleton sheet creation (Cover, Navigator, Model Parameters, Timing, etc.) with A1/A2/A3 conventions, freeze panes, column widths.
+   c. Heading 1 staircase application + named ranges + the two-blank-row inter-section spacing.
+8. **Idempotency test** — re-run twice, confirm no duplicates.
 
-Estimated effort: 1–2 sessions for the references + scripts, with the extractor doing most of the markdown generation.
+Estimated effort: 1 session for the references + the extract script + the markdown updates. 1 additional session for the full `build_template_workbook.py` (the workbook skeleton is the bulk of the work).
