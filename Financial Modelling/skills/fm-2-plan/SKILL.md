@@ -43,7 +43,7 @@ Ideally `scope.md` from Phase 1, but often the modeller only has a brief client 
 ### Stage 0: ROUTE BY MODEL TYPE (do this first)
 
 Read the model type from `scope.md` (Round 4 of Phase 1 records it). Most
-Sam engagements are **not** 3-statement integrated models. The right
+SumProduct engagements are **not** 3-statement integrated models. The right
 skeleton, the right calculation patterns, and which downstream stages even
 apply all depend on the type.
 

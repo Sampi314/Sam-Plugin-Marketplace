@@ -1,6 +1,6 @@
 # Audit Skills — Live Pointer Guide
 
-> **Plugin note:** the audit skills above ship in the separate **audit-general** plugin — install it alongside this one (`/plugin install audit-general@sam`) so fm-5-test can run the audit suite. The shared standards file is bundled with both plugins at `skills/_excel-shared/references/audit_standards.md`.
+> **Plugin note:** the audit skills above ship in the separate **audit-general** plugin — install it alongside this one (`/plugin install audit-general@sumproduct`) so fm-5-test can run the audit suite. The shared standards file is bundled with both plugins at `skills/_excel-shared/references/audit_standards.md`.
 
 The audit agents live as real skills under `.claude/skills/` — **the live
 SKILL.md is always authoritative**. This guide replaces the snapshot copies

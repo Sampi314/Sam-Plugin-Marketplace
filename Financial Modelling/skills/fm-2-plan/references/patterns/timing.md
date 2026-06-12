@@ -9,7 +9,7 @@
 - Options: (a) Monthly columns for construction, annual for operations on same sheet (period length varies)
 - (b) Separate construction and operations sheets
 - (c) Monthly throughout but annual summary sheet
-- Sam preference: Option (a) with MOD-based periodicity — single sheet, variable period length
+- SumProduct preference: Option (a) with MOD-based periodicity — single sheet, variable period length
 
 ## Half-Year Reporting
 - Periodicity = 6 months

@@ -4,7 +4,7 @@
 
 ## Step 1: Identify the Model Type
 
-Not every engagement is a 3-statement model. Sam builds across a wide range — identify which type early so you ask the right questions:
+Not every engagement is a 3-statement model. SumProduct builds across a wide range — identify which type early so you ask the right questions:
 
 | Model Type | Trigger Phrases | Question File |
 |-----------|----------------|---------------|

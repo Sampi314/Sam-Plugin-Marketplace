@@ -1,6 +1,6 @@
 # Cell Style Creation Code
 
-This file contains the canonical pywin32 code for creating all 30 Sam
+This file contains the canonical pywin32 code for creating all 30 SumProduct
 Cell Styles in a workbook. Used by fm-3-design (Phase 3) and fm-4-build
 (Phase 4).
 
@@ -17,7 +17,7 @@ The function uses `wb.Styles.Add(...)` which creates **true Excel Cell Styles**
 
 ```python
 def create_all_styles(wb):
-    """Create all Sam Cell Styles in the workbook.
+    """Create all SumProduct Cell Styles in the workbook.
     Must be called BEFORE any sheet content is built.
     Uses wb.Styles.Add() which creates TRUE Excel Cell Styles
     visible in Home → Cell Styles → Custom.

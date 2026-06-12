@@ -17,7 +17,7 @@ skill). Skills reference these files by relative path:
 - `scripts/verify_build.py` — post-build verifier: asserts styles registered,
   names resolve, Overall_Error_Check = 0, no error values, hyperlinks valid.
   Exit 0/1. Run by fm-4-build before handing to fm-5-test.
-- `references/craft_principles.md` — single canonical statement of the Sam
+- `references/craft_principles.md` — single canonical statement of the SumProduct
   CRaFT methodology (Consistency, Robustness, Flexibility, Transparency).
   Referenced from fm-orchestrator and fm-5-test.
 - `references/model_types.md` — canonical registry of all 13 model types:

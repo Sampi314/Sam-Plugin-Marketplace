@@ -1,4 +1,4 @@
-"""Reusable pywin32 COM helpers for Sam fm-4-build skill.
+"""Reusable pywin32 COM helpers for SumProduct fm-4-build skill.
 
 Import as:
     from build_helpers import (
@@ -100,10 +100,10 @@ def add_cf_greater_than(rng, threshold_formula: str, font_color_bgr: int,
 
 
 def write_header_block(ws, sheet_title: str, model_name_formula: str = "=Model_Name"):
-    """Rows 1-2 standard Sam sheet header.
+    """Rows 1-2 standard SumProduct sheet header.
 
     Row 3 (navigation links) is written by a separate navigation helper.
-    Row 4 is intentionally left blank as the standard Sam spacer.
+    Row 4 is intentionally left blank as the standard SumProduct spacer.
     """
     ws.Cells(1, 1).Value = sheet_title
     ws.Cells(1, 1).Style = "Sheet Title"
@@ -128,7 +128,7 @@ def set_column_widths(ws, widths: dict):
 
 def apply_print_setup(ws, landscape: bool = True, fit_to_width: int = 1,
                       header_rows: str = "$1:$9"):
-    """Standard Sam print setup: landscape A4, fit to 1 page wide,
+    """Standard SumProduct print setup: landscape A4, fit to 1 page wide,
     header rows 1-9 repeat on every page."""
     ws.PageSetup.Orientation = 2 if landscape else 1  # xlLandscape=2
     ws.PageSetup.PaperSize = 9                        # xlPaperA4

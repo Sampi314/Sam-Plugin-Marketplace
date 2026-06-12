@@ -1,6 +1,6 @@
 # CRaFT Compliance Checks
 
-> Sam-specific best-practice verification procedures beyond standard audit rules.
+> SumProduct-specific best-practice verification procedures beyond standard audit rules.
 > These checks are run IN ADDITION to the standard audit skills.
 
 ## Table of Contents
@@ -67,7 +67,7 @@
 | T4 | **Style Guide sheet exists and is complete** | Style Guide sheet must list all 30 custom Cell Styles with display examples | All 30 styles documented | ⚠️ Warning |
 | T5 | **Navigator sheet links to every content sheet** | Navigator TOC must have a hyperlink entry for every sheet in the workbook | 100% coverage | ⚠️ Warning |
 | T6 | **Cover sheet is populated** | Cover sheet has client name, model name, developer, contact, notes | All key fields non-blank | 🟡 Info |
-| T7 | **All 30 Cell Styles exist** | Check workbook Styles collection for all 30 names from the Sam standard set | All 30 present | ⚠️ Warning |
+| T7 | **All 30 Cell Styles exist** | Check workbook Styles collection for all 30 names from the SumProduct standard set | All 30 present | ⚠️ Warning |
 | T8 | **Error Checks sheet hyperlinks to source checks** | Each error check row should have a hyperlink to the actual check cell on BS/CFS | All checks have hyperlinks | 🟡 Info |
 
 ---
@@ -78,7 +78,7 @@
 
 ```python
 def verify_cell_styles(wb):
-    """Check all 30 Sam Cell Styles exist in the workbook."""
+    """Check all 30 SumProduct Cell Styles exist in the workbook."""
     required_styles = [
         "Sheet Title", "Model Name",
         "Heading 1 Text", "Heading 1 Number", "Heading 2 Text",

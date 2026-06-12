@@ -25,7 +25,7 @@ Before running any test, read these reference files:
 
 1. `references/audit_suite_guide.md` — How to invoke each audit skill (execution order, dependencies, per-skill inputs/outputs, standard findings format, consolidation rules, when to skip)
 2. `references/fix_loop_protocol.md` — Finding classification, fix routing matrix, Fix List template, retest protocol, loop tracking, escalation rules
-3. `../_fm-shared/references/craft_principles.md` — CRaFT philosophy (Consistency, Robustness, Flexibility, Transparency) as guiding principles — not a rigid checklist but a quality compass for framing findings and guiding Build decisions
+3. `../_fm-shared/references/craft_principles.md` — SumProduct CRaFT philosophy (Consistency, Robustness, Flexibility, Transparency) as guiding principles — not a rigid checklist but a quality compass for framing findings and guiding Build decisions
 4. `references/audit_skills_pointer.md` — pointer table to the LIVE skills for
    all 15 audit agents (sentry, logic, ai, stylist, efficiency, lingo,
    architect, hyperlinks, vba, pq, navigator, cartographer, audit-manager,
@@ -136,7 +136,7 @@ accepted items, recommendation).
 
 ---
 
-## Sam Best-Practice Assessment
+## SumProduct Best-Practice Assessment
 
 CRaFT principles: `../_fm-shared/references/craft_principles.md`. Use them as
 a quality compass, not a rigid pass/fail checklist — rigour should match the

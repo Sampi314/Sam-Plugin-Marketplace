@@ -44,7 +44,7 @@
 | Construction + operations | ×1.3 | Different logic per phase; phase transition handling |
 | Lender/regulatory format | ×1.2 | Specific output layouts; covenant calculations; cash waterfall |
 | Greenfield (no template) | ×1.3 | Starting from blank; style setup; all boilerplate from scratch |
-| Template-based build | ×0.8 | Starting from Sam template with styles pre-configured |
+| Template-based build | ×0.8 | Starting from SumProduct template with styles pre-configured |
 | Complex debt (sculpted) | ×1.2 | Applied to debt section only — iterative solver for sculpting |
 | Sensitivity / data tables | ×1.1 | 2-variable data tables; scenario management engine |
 

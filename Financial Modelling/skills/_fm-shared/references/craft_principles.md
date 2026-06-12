@@ -1,6 +1,6 @@
 # CRaFT Principles Guide
 
-> Sam's CRaFT methodology defines **four qualities** a good financial model should exhibit. These are guiding principles, not a rigid pass/fail checklist — not every model needs every technique, and pragmatic trade-offs are expected. Use CRaFT to guide decisions during Build and to frame findings during Test.
+> SumProduct's CRaFT methodology defines **four qualities** a good financial model should exhibit. These are guiding principles, not a rigid pass/fail checklist — not every model needs every technique, and pragmatic trade-offs are expected. Use CRaFT to guide decisions during Build and to frame findings during Test.
 
 ## What CRaFT Means
 
