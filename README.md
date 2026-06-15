@@ -11,9 +11,9 @@
 <div align="center">
 
 ```
-+--[ Sam-Plugin-Marketplace ]----------------------------------------------+
-|  Excel / Office plugin marketplace - discover, install, update
-+------------------------------------------------------------+
+┌─[ Sam-Plugin-Marketplace ]───────────────────────────────────────────┐
+│  Excel / Office plugin marketplace - discover, install, update       │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 </div>
@@ -113,9 +113,9 @@ Tracked in the [**Sampi314 Portfolio Roadmap**](https://github.com/users/Sampi31
 <div align="center">
 
 ```
-+--[ end of transmission ]------------------------------------+
-|  github.com/Sampi314/Sam-Plugin-Marketplace
-+------------------------------------------------------------+
+┌─[ end of transmission ]──────────────────────────────────────────────┐
+│  github.com/Sampi314/Sam-Plugin-Marketplace                          │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 </div>
