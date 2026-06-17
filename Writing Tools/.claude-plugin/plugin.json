@@ -1,7 +1,7 @@
 {
   "name": "writing-tools",
-  "version": "1.0.0",
-  "description": "SumProduct editorial toolkit for Claude Code: writes and audits publications in Liam Bastick's editorial voice. Includes a DAX blog article writer, a book-length prose writer for the 'Introduction to Financial Modelling' / 'Continuing Financial Modelling' style, and a comprehensive auditor that checks any SumProduct article against Liam's UK English + SumProduct house rules (grammar, formatting, technical accuracy, tone, structure) and produces tracked-changes Word output.",
+  "version": "1.1.0",
+  "description": "Editorial toolkit for Claude Code: writes and audits publications in Liam Bastick's editorial voice. Includes a DAX blog article writer, a book-length prose writer for the 'Introduction to Financial Modelling' / 'Continuing Financial Modelling' style, a comprehensive auditor that checks articles against UK English and house style rules with tracked-changes Word output, and a three-skill daily AI blog pipeline (wt-ai-search → wt-ai-plan → wt-ai-write) that produces a short-form daily AI news post with a Gemini-generated brand-styled image and a Mermaid flow chart.",
   "author": {
     "name": "Sam"
   }

@@ -21,7 +21,7 @@
     {
       "name": "writing-tools",
       "source": "./Writing Tools",
-      "description": "SumProduct editorial toolkit in Liam Bastick's voice: a DAX function blog writer, a book-length prose writer, and an auditor that checks any SumProduct article against UK English and Liam's house rules with tracked-changes Word output."
+      "description": "Editorial toolkit in Liam Bastick's voice: a DAX function blog writer, a book-length prose writer, an auditor that checks articles against UK English and house style rules with tracked-changes Word output, and a daily AI blog pipeline (search → plan → write) that produces short-form AI news posts with brand-styled Gemini images and Mermaid flow charts."
     }
   ]
 }

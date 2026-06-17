@@ -1,9 +1,9 @@
-# SumProduct Editorial Rules
+# Editorial Rules
 
 This document has TWO tiers:
 
 1. **TIER 1 — UK English Rules**: Standard British English writing conventions. These are not Liam-specific — they are the baseline for any UK English publication.
-2. **TIER 2 — Liam's Rules**: SumProduct-specific rules defined by Liam Bastick. These sit ON TOP of UK English rules and override where there is a conflict.
+2. **TIER 2 — Liam's Rules**: editorial rules defined by Liam Bastick. These sit ON TOP of UK English rules and override where there is a conflict.
 
 When auditing, apply BOTH tiers. Tier 2 always wins over Tier 1 if there is a conflict.
 
@@ -13,7 +13,7 @@ When auditing, apply BOTH tiers. Tier 2 always wins over Tier 1 if there is a co
 
 # TIER 1: UK ENGLISH RULES (Foundation)
 
-These are standard British English conventions that all SumProduct content must follow.
+These are standard British English conventions that all content must follow.
 
 ---
 
@@ -85,7 +85,7 @@ UK English uses single quotation marks for primary quotes:
 
 ## UK6. -ise vs -ize
 
-UK English accepts both, but SumProduct uses the **-ise** form consistently:
+UK English accepts both, but the house style uses the **-ise** form consistently:
 - ✓ categorise, organise, recognise, specialise
 - ✗ categorize, organize, recognize, specialize
 
@@ -93,9 +93,9 @@ UK English accepts both, but SumProduct uses the **-ise** form consistently:
 ---
 ---
 
-# TIER 2: LIAM'S RULES (SumProduct-Specific — On Top of UK English)
+# TIER 2: LIAM'S RULES (Editorial — On Top of UK English)
 
-These rules are defined by Liam Bastick specifically for SumProduct publications. They sit on top of standard UK English and take priority.
+These rules are defined by Liam Bastick. They sit on top of standard UK English and take priority.
 
 Rules are grouped into six categories:
 - **A. Formatting** — bold, italic, numbers, dates
@@ -115,7 +115,7 @@ Most prose is plain text. **Bold is reserved for the specific cases listed in th
 
 If a word does not fall into one of those categories, do not bold it — no matter how important it feels in the moment. When auditing, default to *removing* bold rather than *adding* it.
 
-This is the master principle of SumProduct's bold convention. Liam: "Take care with what you embolden. Most other things are not [bold]."
+This is the master principle of the bold convention. Liam: "Take care with what you embolden. Most other things are not [bold]."
 
 ### A1. Bold: Languages vs Feature Names
 
@@ -210,11 +210,11 @@ Error results are always in italics:
 - Negative numbers: -7.15
 - Integers ≥ 10: 10, 15, 100, 1000
 
-**Lenient application:** Only flag in clearly SumProduct-convention contexts (argument counts, requirements, step counts, prose quantities). Do NOT flag in formula values, cell references, data values, or large technical numbers.
+**Lenient application:** Only flag in clearly house-convention contexts (argument counts, requirements, step counts, prose quantities). Do NOT flag in formula values, cell references, data values, or large technical numbers.
 
 ### A7. Date Format — No Leading Zeros
 
-Extends UK4 with an additional SumProduct rule: single-digit days must NOT have a leading zero.
+Extends UK4 with an additional house rule: single-digit days must NOT have a leading zero.
 - ✓ "6 Jan 26"
 - ✗ "06 Jan 26"
 
@@ -244,10 +244,10 @@ When referring to the result of a DAX query or code block with "the following Ta
 
 When quoting text values returned by functions in running prose, use single quotes (UK English convention), NOT double quotes:
 
-- ✓ **LEFT**("SumProduct", 3) returns 'Sum'
-- ✗ **LEFT**("SumProduct", 3) returns "Sum"
+- ✓ **LEFT**("Holiday", 3) returns 'Hol'
+- ✗ **LEFT**("Holiday", 3) returns "Hol"
 
-Note: double quotes inside formula syntax (*e.g.*, `LEFT("SumProduct", 3)`) remain as double quotes — this rule only applies to the prose description of what a function returns.
+Note: double quotes inside formula syntax (*e.g.*, `LEFT("Holiday", 3)`) remain as double quotes — this rule only applies to the prose description of what a function returns.
 
 ### A12. "Would" → "Will" for Definitive Outcomes
 

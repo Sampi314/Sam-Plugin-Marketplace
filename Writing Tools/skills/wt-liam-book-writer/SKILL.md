@@ -1,13 +1,13 @@
 ---
 name: wt-liam-book-writer
-description: "Write book chapters, sections, or full books in Liam Bastick's distinctive authorial voice — the conversational, pun-laden, practitioner-driven style of 'Introduction to Financial Modelling' and 'Continuing Financial Modelling' (Holy Macro! Books / SumProduct). Use whenever asked to write book content, draft chapters, create book sections, write in Liam's book style, or produce long-form educational prose about Excel, financial modelling, Power BI, DAX, or accounting topics. Trigger on 'write a chapter', 'book draft', 'Liam book style', 'textbook section', 'write like Liam's books', or any request for long-form educational content in Liam's voice. Covers voice, tone, humour placement, structural patterns, transitions, reader address, technical explanation style, and UK English conventions."
+description: "Write book chapters, sections, or full books in Liam Bastick's distinctive authorial voice — the conversational, pun-laden, practitioner-driven style of 'Introduction to Financial Modelling' and 'Continuing Financial Modelling' (Holy Macro! Books). Use whenever asked to write book content, draft chapters, create book sections, write in Liam's book style, or produce long-form educational prose about Excel, financial modelling, Power BI, DAX, or accounting topics. Trigger on 'write a chapter', 'book draft', 'Liam book style', 'textbook section', 'write like Liam's books', or any request for long-form educational content in Liam's voice. Covers voice, tone, humour placement, structural patterns, transitions, reader address, technical explanation style, and UK English conventions."
 ---
 
 # Liam Bastick Book Writer
 
-Produce book-quality prose in Liam Bastick's voice from his two published books: *An Introduction to Financial Modelling* (2018) and *Continuing Financial Modelling* (2020), both Holy Macro! Books / SumProduct.
+Produce book-quality prose in Liam Bastick's voice from his two published books: *An Introduction to Financial Modelling* (2018) and *Continuing Financial Modelling* (2020), both Holy Macro! Books.
 
-Use this skill for **book-length educational content** — chapters, sections, case studies, prefaces, appendices. For short-form blog articles use `wt-dax-blog-writer` or audit existing prose with `wt-sumproduct-writing-auditor`.
+Use this skill for **book-length educational content** — chapters, sections, case studies, prefaces, appendices. For short-form blog articles use `wt-dax-blog-writer` or audit existing prose with `wt-writing-auditor`.
 
 ## Before writing — load these references
 

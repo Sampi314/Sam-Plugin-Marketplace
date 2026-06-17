@@ -1,8 +1,8 @@
 # DAX Article Template — Exact Structure
 
 Derived from 20+ Liam-approved DAX function articles. This file covers STRUCTURE and EXACT WORDING only. For all formatting, grammar and style rules, read the auditor skill's references:
-- `/mnt/skills/user/wt-sumproduct-writing-auditor/references/liam-rules.md`
-- `/mnt/skills/user/wt-sumproduct-writing-auditor/references/style-guide.md`
+- `/mnt/skills/user/wt-writing-auditor/references/liam-rules.md`
+- `/mnt/skills/user/wt-writing-auditor/references/style-guide.md`
 
 ---
 

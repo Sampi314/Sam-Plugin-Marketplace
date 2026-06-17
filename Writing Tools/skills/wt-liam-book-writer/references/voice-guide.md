@@ -1,6 +1,6 @@
 # Liam Bastick Book Voice Guide
 
-Derived from comprehensive analysis of *An Introduction to Financial Modelling* (2018) and *Continuing Financial Modelling* (2020), both published by Holy Macro! Books / SumProduct Pty Limited.
+Derived from comprehensive analysis of *An Introduction to Financial Modelling* (2018) and *Continuing Financial Modelling* (2020), both published by Holy Macro! Books.
 
 ---
 

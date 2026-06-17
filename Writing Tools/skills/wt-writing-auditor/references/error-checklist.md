@@ -1,4 +1,4 @@
-# Error Patterns — Found Across 80+ SumProduct Articles + Live Audit Sessions
+# Error Patterns — Found Across 80+ Liam-Audited Articles + Live Audit Sessions
 
 All errors below are REAL examples from analysed articles and live audit sessions (LEN, LEFT, COLLAPSEALL, LINEST, LINESTX). Use these to calibrate what to look for.
 
@@ -367,7 +367,7 @@ These are errors that can ONLY be caught by checking current online sources. Sta
 - [ ] Opening paragraph bolds (**DAX**) within parentheses [Template]
 - [ ] DirectQuery remark present in DAX articles [Template]
 
-### Pass 2: Liam's SumProduct Rules — Tier 2 (Priority 2)
+### Pass 2: Liam's Editorial Rules — Tier 2 (Priority 2)
 - [ ] **DAX** and **M** bold as languages, but NOT bold in feature names ("DAX query view") [Liam A1]
 - [ ] *i.e.* and *e.g.* italic [Liam A4]
 - [ ] Error values italic (*#VALUE!*, *#N/A*, etc.) [Liam A5]

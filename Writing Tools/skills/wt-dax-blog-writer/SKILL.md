@@ -1,19 +1,19 @@
 ---
 name: wt-dax-blog-writer
-description: "Write SumProduct DAX function blog articles in Liam Bastick's editorial style. Use this skill whenever asked to write, draft, create, or generate a DAX function article, DAX blog post, Power Pivot Principles article, or any 'A to Z of DAX Functions' content. Also trigger when the user mentions 'write DAX blog', 'DAX article for [function name]', 'Power Pivot Principles article', 'A to Z of DAX', or asks to write about any specific DAX function in Liam/SumProduct style. Produces publication-ready markdown articles that follow SumProduct's exact template and Liam Bastick's editorial voice."
+description: "Write DAX function blog articles in Liam Bastick's editorial style. Use this skill whenever asked to write, draft, create, or generate a DAX function article, DAX blog post, Power Pivot Principles article, or any 'A to Z of DAX Functions' content. Also trigger when the user mentions 'write DAX blog', 'DAX article for [function name]', 'Power Pivot Principles article', 'A to Z of DAX', or asks to write about any specific DAX function in Liam's editorial style. Produces publication-ready markdown articles that follow the exact template and Liam Bastick's editorial voice."
 ---
 
-# DAX Blog Writer — SumProduct Style
+# DAX Blog Writer — Liam Bastick Style
 
-Generate publication-ready DAX function articles matching Liam Bastick's editorial standards for the SumProduct *Power Pivot Principles: The A to Z of DAX Functions* series.
+Generate publication-ready DAX function articles matching Liam Bastick's editorial standards for the *Power Pivot Principles: The A to Z of DAX Functions* series.
 
 ## Before writing — load these references
 
 The rules and template live in references, not here. Read in order:
 
-1. The `wt-sumproduct-writing-auditor` skill's `references/liam-rules.md` — UK English (Tier 1) + Liam's SumProduct rules (Tier 2). Single source of truth.
-2. The `wt-sumproduct-writing-auditor` skill's `references/style-guide.md` — Section 2 is the DAX series template.
-3. The `wt-sumproduct-writing-auditor` skill's `references/error-checklist.md` — known error patterns. Section 7 is the pre-publication checklist.
+1. The `wt-writing-auditor` skill's `references/liam-rules.md` — UK English (Tier 1) + Liam's editorial rules (Tier 2). Single source of truth.
+2. The `wt-writing-auditor` skill's `references/style-guide.md` — Section 2 is the DAX series template.
+3. The `wt-writing-auditor` skill's `references/error-checklist.md` — known error patterns. Section 7 is the pre-publication checklist.
 4. This skill's `references/article-template.md` — exact DAX article structure, fixed wording, and image conventions derived from 20+ Liam-approved articles.
 
 ## Workflow

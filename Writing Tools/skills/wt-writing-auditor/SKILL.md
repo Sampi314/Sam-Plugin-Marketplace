@@ -1,16 +1,16 @@
 ---
-name: wt-sumproduct-writing-auditor
-description: "Audit and fix SumProduct blog articles to match Liam Bastick's editorial standards. Use this skill whenever asked to review, audit, check, proofread, edit, or fix any SumProduct article — including DAX function articles, Excel A-to-Z articles, Final Friday Fix challenges, Monday Morning Mulling solutions, AI blog articles, Thought articles, newsletters, or any other SumProduct publication. Also trigger when the user mentions 'Liam style', 'SumProduct style', 'writing audit', 'check this article', 'proofread for Liam', or references any SumProduct blog content that needs quality review. Covers grammar, formatting, technical accuracy, tone, word choice, product name spacing, Power Pivot compatibility, and style compliance. Produces a markdown error report and a tracked-changes Word document."
+name: wt-writing-auditor
+description: "Audit and fix blog articles in Liam Bastick's style to match Liam Bastick's editorial standards. Use this skill whenever asked to review, audit, check, proofread, edit, or fix any Liam-style article — including DAX function articles, Excel A-to-Z articles, Final Friday Fix challenges, Monday Morning Mulling solutions, AI blog articles, Thought articles, newsletters, or any other Liam-style publication. Also trigger when the user mentions 'Liam style', 'Liam editorial style', 'writing audit', 'check this article', 'proofread for Liam', or references any blog content in Liam's style that needs quality review. Covers grammar, formatting, technical accuracy, tone, word choice, product name spacing, Power Pivot compatibility, and style compliance. Produces a markdown error report and a tracked-changes Word document."
 ---
 
-# SumProduct Writing Auditor — Liam Bastick Style
+# Writing Auditor — Liam Bastick Style
 
-Audit any SumProduct article against Liam Bastick's editorial standards. Liam is the final quality gate for all SumProduct publications.
+Audit any article against Liam Bastick's editorial standards. Liam is the final quality gate.
 
 ## Two-tier rule system
 
 1. **TIER 1 — UK English** (foundation): standard British conventions — spelling, punctuation, grammar.
-2. **TIER 2 — Liam's SumProduct rules** (top): Liam's house rules, sit ON TOP of Tier 1 and win on conflict.
+2. **TIER 2 — Liam's editorial rules** (top): Liam's house rules, sit ON TOP of Tier 1 and win on conflict.
 
 Both tiers are spelled out in `references/liam-rules.md`, labelled and separated.
 

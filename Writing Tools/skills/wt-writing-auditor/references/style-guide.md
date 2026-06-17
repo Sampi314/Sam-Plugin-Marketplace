@@ -1,4 +1,4 @@
-# SumProduct Style Guide — Derived from 80+ Liam Bastick Articles + 6 Live Audit Sessions
+# Editorial Style Guide — Derived from 80+ Liam Bastick Articles + 6 Live Audit Sessions
 
 This guide is derived from analysis of 40+ Liam-edited DAX articles, 20+ Liam-written Excel articles, 10+ FFF/MMM pairs, AI blog comparison pairs (Valentina-vs-Liam), and 6+ live audit sessions producing tracked-changes Word documents.
 
