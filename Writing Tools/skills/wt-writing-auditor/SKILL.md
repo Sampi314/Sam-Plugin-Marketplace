@@ -24,6 +24,14 @@ The rules, templates, and error patterns live in references — do not skip any.
 
 ## Workflow
 
+### Step 0 — Confirm with the user before running
+
+This skill produces a substantive audit and a tracked-changes Word document. Both take time and modify the user's working files. When the skill is invoked, **the first action is to ask the user before doing anything else**:
+
+> "I'm about to audit *<article name>* against Liam's editorial standards and apply tracked changes to the docx. The audit will take a few minutes and the docx will be modified in place. Shall I proceed?"
+
+Wait for explicit confirmation. Do not load the reference files, run web verification, or open the article until the user has said yes. If the user wants a partial run (audit report only, no docx changes; or docx fixes only, no full audit), capture that scope before starting and skip the steps the user did not ask for.
+
 ### Step 1 — Identify article type and verify facts
 
 Detect series from the title:
