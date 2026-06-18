@@ -297,11 +297,72 @@ Applies to all running text, remark bullets, and descriptions. Does NOT apply in
 <a name="ai-blog"></a>
 ## 6b. AI BLOG SERIES TEMPLATE
 
-**Written by:** Staff writers (e.g., Valentina), **edited by** Liam
+**Written by:** Staff writers (Valentina, Sam etc.), **edited by** Liam
 **Voice:** Team ("we")
 **Tense:** Present
+**Training pairs:** `General/Sam/Blogs/Training/AI Blog 037-039 Valentina.docx + Liam.docx`. Read at least one pair before drafting.
+
+### Two sub-styles by post type
+
+**A. Standalone daily AI blog (most posts)**
+
+1. Title: `AI Blog: [Topic]` form. Title Case throughout. Example: *AI Blog: NotebookLM Studio: Turning Text into Interactive Audio*.
+2. Date: real publication date, e.g. `6 March 2026`.
+3. Opening: plain prose paragraph (NOT italic) beginning with `Welcome back to our AI blog series!` (with exclamation mark), then context + this-post setup.
+4. Section headings: **Title Case** throughout. *Improving Slide Quality Starts with Better Sources*, *Using More Detailed Prompts to Guide the Output*, *Why This Matters for Teams*.
+5. `Word to the Wise` (Title Case) — present in EVERY daily AI blog. Two or three reflective paragraphs in Valentina voice: *"AI will not replace X. However, it can Y."*
+6. Series hook (final line): `Join us next time for more exciting news of AI tools!` (with exclamation mark).
+
+**B. Multi-part series sub-style (Claude Skills 054-056 and successors)**
+
+1. Title: `Topic – Part N: Subtitle` form (en-dash). Subtitle Title Case.
+2. Date: `TBC` placeholder.
+3. Opening: **italic** series-anchor teaser wrapped in single asterisks (so `markdown_to_docx.py` renders italic). Pattern: *Welcome back to our AI blog series. [Position in series]. This time, we [verb] [thing].* — full stop, NOT exclamation mark in this sub-style.
+4. Section headings: sentence case accepted; Title Case also accepted.
+5. `Word to the Wise` — same expectation as standalone, in Valentina reflective voice (NOT aphoristic punch lines).
+6. Series hook (final line): names the topic of Part N+1 when known. *"Join us next time for Part 3: a four-step recipe and a full worked DAX example you can copy."* No exclamation mark.
+
+### Body structure (both sub-styles)
+
+After the opening, both sub-styles share the same body conventions:
+
+1. **Recap-plus-this-time paragraph** — one paragraph below the opening, naming what previous posts covered and what this post will do.
+2. **Cover image** between recap paragraph and first H2.
+3. **First H2 section** — sets up the problem or context. The vivid scenario (`Picture the team...`) opens the first body paragraph, NOT the teaser.
+4. **Deep substantive H2 sections** explaining concepts with concrete examples. Use linking phrases between paragraphs (see *Linking phrases* below).
+5. **`Word to the Wise`** (always present).
+6. **Series hook** on its own line as the final line.
+
+### Linking phrases between paragraphs (universal)
+
+Every paragraph after the first in a section should open with a linking phrase that ties it to the previous one. Without these, the prose reads as disconnected statements.
+
+| Connector | Used for |
+|---|---|
+| *Therefore*, *As a result* | Drawing the implication of what was just said |
+| *However*, *By contrast* | Pivoting to a counter-point |
+| *In our example*, *In our first pass*, *In practice*, *At this stage* | Grounding an abstract point in a concrete case |
+| *From there*, *Once X*, *After X* | Sequencing in time |
+| *What's more* | Stacking a related point |
+| *Let me explain.* | Inviting the reader after a punchy two-beat (Liam adds this on edit) |
+
+### Word to the Wise (Valentina pattern)
+
+Two or three short paragraphs, reflective tone. The shape is:
+
+1. Big-picture reflection on what the topic enables that wasn't possible before.
+2. Acknowledge what AI does NOT replace (judgment, proofreading, brand ownership, structure decisions), then say what it CAN do (remove friction, save hours, change the workflow).
+
+Pattern from Valentina/Liam 037:
+
+> NotebookLM is already capable of producing high-quality presentation drafts. With a little extra care such as better sources, clearer prompts and a practical plan for final edits, it can become a reliable part of a professional presentation workflow.
+>
+> AI will not replace judgment, proofreading or brand ownership. However, it can remove hours of manual effort and allow us to focus on what matters most: clarity, insight and credibility.
+
+**Avoid** aphoristic-only closes like *"Build your own first"* or *"Treat the description as the product"* without surrounding context. Punch lines work as bullets inside earlier sections; in Word to the Wise they read as flat. Use full reflective paragraphs.
 
 ### Key AI Blog Conventions:
+
 - **Hedge AI capability claims** — use "may" not "can" for what AI tools do (see Rule C8/H1)
 - **Feature/mode names in single quotes** — 'Audio Overview', 'Interactive Mode' (see Rule A15)
 - **Number convention applies** — "two [2] practical ways" (commonly missed by writers)
@@ -312,7 +373,8 @@ Applies to all running text, remark bullets, and descriptions. Does NOT apply in
 - **Add precision** — qualify vague terms ("required visual standards" not "visual standards")
 - **Transitional phrases** — "Let me explain.", "Keep reading!" for flow
 - **"Judgment"** not "judgement"
-- Sentence case for mid-article sub-headings
+- **No em-dashes** anywhere in prose; use colons, parentheses, full stops, commas
+- **Any three or more parallel sentences = a bulleted list, not prose**
 - **Web verification (Rule D11)**: ALWAYS search for latest news about AI tools mentioned. AI tools change rapidly — tools get rebranded (Bard → Gemini), features are added/removed, tools get discontinued. Flag any outdated claims as Critical.
 
 ---
@@ -330,6 +392,8 @@ Applies to all running text, remark bullets, and descriptions. Does NOT apply in
 | Tense | Present | Present | Present | **Past** | Present |
 | Closing links | 3 links | No links | None | Dated return | Teaser |
 | Humour | Light | Frequent | None | None | None |
-| Word to Wise | No | No | No | **Yes** | No |
+| Word to Wise | No | No | No | **Yes** | **Yes** |
 | Hedge claims | No | No | No | No | **Yes** |
 | Solution voice | N/A | N/A | N/A | **Imperative** | N/A |
+| Linking phrases | Light | Light | Light | Light | **Heavy** (Therefore, However, In our example) |
+| Headings | bold-italic | bold | bold-italic | bold-italic | Title Case (standalone) / sentence case (series sub-style) |
