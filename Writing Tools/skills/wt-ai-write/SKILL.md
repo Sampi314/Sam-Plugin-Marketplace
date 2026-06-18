@@ -49,23 +49,34 @@ For the brand visual language (colour palette, typography, imagery rules), `refe
 
 ## Article Structure
 
-The canonical reference is the Claude Skills 3-part series under `From Liam/` in the project root (Parts 054, 055, 056). Read at least one Liam article in full before drafting; its shape and rhythm are what we aim for. Articles use the order below.
+There are **two canonical references**, and the post type decides which one leads:
+
+1. **Daily AI blogs (most posts)**: read the Valentina-vs-Liam training pairs at `<user>/Sam/Blogs/Training/AI Blog 037-039 Valentina.docx` and `... Liam.docx`. Valentina writes the draft; Liam edits lightly. The Liam version is what gets published, and the delta between the two is the editing signal. The 037-039 pairs are the cleanest examples.
+2. **Multi-part series (Claude Skills 054-056 and successors)**: read `<project root>/From Liam/AI Blog 054-056 - Claude Skills Part 1-3.docx`. Same author but in a specific series sub-style with sentence-case headings, an italic series-anchor teaser and a closing series hook that names Part N+1.
+
+Both follow the order below; the *Two patterns by post type* notes inside each step say where the styles diverge.
 
 ### 1. Headline
 
-`Topic – Part N: Subtitle` form when part of a series (en-dash, not em-dash; subtitle in Title Case). For a standalone post, a factual headline that names the thing and the audience benefit.
+- **Daily AI blog**: `AI Blog: [Topic]` form. Title Case throughout (every major word capitalised). Example: *AI Blog: NotebookLM Studio: Turning Text into Interactive Audio*.
+- **Series post**: `Topic – Part N: Subtitle` (en-dash, not em-dash; subtitle in Title Case). Example: *Claude Skills – Part 4: From Skill to Plugin*.
 
-### 2. TBC
+### 2. Date placeholder
 
-A single line under the headline as a date placeholder. Liam fills it in at publication.
+- **Daily AI blog**: real publication date on its own line, e.g. `6 March 2026`. Liam confirms at publication.
+- **Series post**: `TBC` as placeholder.
 
-### 3. Series-anchor teaser (italic)
+### 3. Opening paragraph
 
-A short paragraph of one to three sentences that anchors the post in the series and announces the topic. Wrap the whole paragraph in single asterisks so `markdown_to_docx.py` renders it italic. **The teaser is NOT a vivid scenario.** It is the series anchor and nothing more. Pattern:
+**Daily AI blog** — **plain prose, NOT italic.** Opens with `Welcome back to our AI blog series!` (with the exclamation mark) then runs straight into a factual paragraph that names the topic and what the post will cover.
 
-> *Welcome back to our AI blog series. [Position in series — e.g. "This time, we continue our X review", "Our X review concludes", "The X review extends"]. This time, we [verb] [thing].*
+> Welcome back to our AI blog series! In the previous blog, we showed how NotebookLM can turn a written paper into a structured slide deck in minutes. ... We will go one step further and look at how to improve AI-generated slides, using practical examples from our own workflow.
 
-Examples from Liam 054-056:
+**Series post** — **italic series-anchor teaser** wrapped in single asterisks so `markdown_to_docx.py` renders it italic. The teaser anchors the post in the series and announces the topic. **NOT a vivid scenario.** Pattern:
+
+> *Welcome back to our AI blog series. [Position in series — e.g. "This time, we continue our X review", "Our X review concludes"]. This time, we [verb] [thing].*
+
+Examples from Liam Skills 054-056:
 
 - *Welcome back to our AI blog series. This time, we look at one of the more practical developments in AI tooling: Claude Skills, a way to turn a general-purpose assistant into something closer to a specialist.*
 - *Welcome back to our AI blog series. This time, we continue our review of Claude Skills. This time, we focus on how they work.*
@@ -91,7 +102,26 @@ Then two or three more paragraphs flesh out the problem the article is about to 
 
 ### 7. Deep substantive H2 sections
 
-Multiple H2 headings, each one explaining a concept rather than just naming it. Concrete examples on every page. Use **numbered lists** for ordered steps (the four [4] steps of a recipe, the click path of an install). Use **bulleted lists** for parallel items with explanations (the five [5] sources, the four [4] use cases). See *List formatting* below.
+Multiple H2 headings, each one explaining a concept rather than just naming it. Concrete examples on every page.
+
+**Heading case:**
+- **Daily AI blog**: Title Case throughout (every major word capitalised). Examples: *Improving Slide Quality Starts with Better Sources*, *Using More Detailed Prompts to Guide the Output*, *Why This Matters for Teams*, *Word to the Wise*.
+- **Series post (Skills 054-056 and successors)**: sentence case is also accepted in this sub-style.
+
+**Connect paragraphs explicitly.** Every paragraph after the first in a section should open with a linking phrase that ties it to the previous one. Common Valentina/Liam linkers:
+
+| Connector | Used for |
+|---|---|
+| *Therefore*, *As a result* | Drawing the implication of what was just said |
+| *However*, *By contrast* | Pivoting to a counter-point |
+| *In our example*, *In our first pass*, *In practice*, *At this stage* | Grounding an abstract point in a concrete case |
+| *From there*, *Once X*, *After X* | Sequencing in time |
+| *What's more* | Stacking a related point |
+| *This is particularly important when*, *This is especially useful for* | Naming an audience or use case |
+
+Without these linkers, paragraphs read as a list of unconnected statements. With them, the post argues toward a conclusion.
+
+Use **numbered lists** for ordered steps where sequence matters. Use **bulleted lists** for parallel items, alternatives, or any time three or more sentences share the same grammatical shape — those are a list pretending to be prose. See *List formatting* below.
 
 ### 8. Worked example shown in FULL
 
@@ -101,26 +131,28 @@ When the article describes something the reader could build, show it in full (a 
 
 A short section (one paragraph and a blockquote) that gives the reader a single Claude prompt for the lazy path through the same task. Liam uses this in 056. Pattern: *"If we did not want to do any of that ourselves, we could open a Claude chat and say:"* then a blockquote with the actual prompt, then one paragraph saying what Claude does next and how long it takes.
 
-### 10. Word to the wise (FINAL post of a series or standalone reflective posts only)
+### 10. Word to the Wise
 
-A reflective closing section, three or four short paragraphs:
+**Present in every daily AI blog and every reflective post.** Title Case heading: `Word to the Wise`. Two or three short paragraphs in Valentina's reflective tone — NOT aphoristic punch lines. The shape is:
 
-- Paragraph 1: big-picture reflection on the topic's significance.
-- Paragraph 2: the discipline the reader should take with them (e.g. *"Treat the description as the product"*, *"Build your own first"*).
-- Paragraph 3 (optional): call to action (*"Close this article, open a Claude chat, and you can have a working first Skill saved in ten [10] minutes."*).
-- Paragraph 4: forward-looking line (*"We will be running X over the coming weeks and reporting back."*).
+1. Reflect on what the topic enables in the wider context (what AI now makes possible that wasn't before, or the human role that remains).
+2. Acknowledge what AI does NOT replace (judgment, proofreading, brand ownership, structure decisions). Then say what it CAN do (remove friction, save hours, change the workflow).
 
-**Skip Word to the wise on mid-series posts** (e.g. Part 2 of a 3-part series). Close those with a thematic closing-thoughts paragraph in the last body section instead, then the series hook directly.
+Pattern from the training pairs (Valentina/Liam 037):
+
+> NotebookLM is already capable of producing high-quality presentation drafts. With a little extra care such as better sources, clearer prompts and a practical plan for final edits, it can become a reliable part of a professional presentation workflow.
+>
+> AI will not replace judgment, proofreading or brand ownership. However, it can remove hours of manual effort and allow us to focus on what matters most: clarity, insight and credibility.
+
+**Avoid** aphoristic-only closes like *"Build your own first"* or *"Treat the description as the product"* without surrounding context. These punch lines work as bullets inside earlier sections; in Word to the Wise they read as flat. Use full reflective paragraphs.
 
 ### 11. Series hook (final line)
 
-The very last line of the article, on its own. Names the topic of Part N+1 when known:
+A single line on its own at the very end.
 
-> Join us next time for Part 3: a four-step recipe and a full worked DAX example you can copy.
-
-Generic only when there is no specific next topic:
-
-> Join us next time for more updates on AI tools.
+- **Daily AI blog**: `Join us next time for more exciting news of AI tools!` (with exclamation mark).
+- **Series post**: name what Part N+1 covers — `Join us next time for Part 3: a four-step recipe and a full worked DAX example you can copy.` (no exclamation mark).
+- **Final post of a series with no known follow-up topic**: generic line — `Join us next time for more updates on AI tools.`
 
 **Do not append a "Sources" section.** The Liam blog never carries a bibliography at the end. Attributions, where they exist at all, sit inline in the prose, paraphrased.
 
@@ -227,23 +259,28 @@ Embed the Mermaid source as a code block alongside the PNG so future editors can
 
 ## Quality Checklist — Run Before Hand-Off
 
-- [ ] Title in `Topic – Part N: Subtitle` form (en-dash, Title Case subtitle) for series posts.
-- [ ] Teaser is a **series-anchor only** (1-3 sentences), wrapped in single asterisks for italic. NO vivid scenario in the teaser.
-- [ ] Recap-plus-this-time paragraph sits between teaser and first H2 (no sub-heading above it).
-- [ ] First H2 section opens with a **`Picture the [thing]...`** vivid scenario.
+- [ ] **At least one Valentina/Liam training pair read** from `<user>/Sam/Blogs/Training/` before drafting any daily AI blog.
+- [ ] Title in correct form: `AI Blog: [Topic]` (Title Case) for daily posts, `Topic – Part N: Subtitle` (en-dash, Title Case subtitle) for series posts.
+- [ ] Date placeholder correct: real date for daily, `TBC` for series posts.
+- [ ] Opening correct: plain prose for daily posts (no italic, exclamation in `Welcome back ... AI blog series!`), italic series-anchor for series posts (full stop, wrapped in single asterisks).
+- [ ] Recap-plus-this-time paragraph sits between teaser/opener and first H2.
+- [ ] First H2 section opens with a **`Picture the [thing]...`** vivid scenario when the topic benefits from one.
 - [ ] Cover image between recap paragraph and first H2.
-- [ ] UK English throughout (cross-check against `wt-writing-auditor`).
+- [ ] **Headings in Title Case** for daily AI blogs; sentence case accepted in series sub-styles like Skills 054-056.
+- [ ] **Every paragraph after the first in a section starts with an explicit linking phrase** (*Therefore*, *However*, *In our example*, *In practice*, *From there*, *By contrast*, *As a result*, *What's more*). Without these the prose reads as disconnected statements.
+- [ ] UK English throughout, including *whilst*, *based upon*, *especially* (cross-check against `wt-writing-auditor`).
 - [ ] Fourth person ("we"); no "I".
 - [ ] Tone is neutral and analytical — no hype, no doom.
 - [ ] **No em-dashes anywhere.** Colons, parentheses, full stops, commas only. Hyphens in compounds only.
 - [ ] Bracketed numerals on structurally important counts only.
-- [ ] Bulleted lists: bold-lead-colon-lowercase-no-period.
-- [ ] Numbered lists: full sentences, no bold leads, terminal period on the last item only.
-- [ ] Sentences within paragraphs connect via *so, but, while, because, and* — no staccato fragments.
+- [ ] **Any three or more parallel sentences = a bulleted list, not prose.** If three sentences share the same grammatical shape, convert to a list.
+- [ ] Bulleted lists for labelled items: bold-lead-colon-lowercase-no-period.
+- [ ] Bulleted lists for steps (Valentina style): no bold leads, lowercase first word, full stop only on the last item.
+- [ ] Numbered lists when sequence matters: full sentences, no bold leads, terminal period on the last item only.
 - [ ] UI/feature explanations lead with what the user sees (tile, panel, button) and use click-path arrows (`Settings → X → Y`). Implementation layer mentioned briefly only.
 - [ ] Worked example shown in FULL (complete file content), not snippets, with each part explained afterwards.
-- [ ] Word to the wise present in series finales / standalone reflective posts; OMITTED on mid-series posts.
-- [ ] Series hook on its own line at the very end, naming Part N+1's topic when known.
+- [ ] **Word to the Wise present in every post.** Title Case heading. Two or three short reflective paragraphs in Valentina's voice (*"AI will not replace X. However, it can Y."*). NOT aphoristic punch lines alone.
+- [ ] Series hook on its own line at the very end. Daily: `Join us next time for more exciting news of AI tools!`. Series with known next part: name the topic of Part N+1.
 - [ ] **No Sources section.** Inline paraphrased attributions only.
 - [ ] Three [3] to eight [8] illustrative images via `generate_image_gemini.py`, each tied to a specific section.
 - [ ] Every image is bright (off-white background), with SumProduct Green dominant on the subject.
@@ -285,9 +322,18 @@ Embed the Mermaid source as a code block alongside the PNG so future editors can
 
 **Canonical writing + image references** — read these before drafting any post:
 
-- `<project root>/From Liam/AI Blog 054 - Claude Skills Part 1.docx` — full Liam-edited Part 1.
-- `<project root>/From Liam/AI Blog 055 - Claude Skills Part 2.docx` — Part 2.
-- `<project root>/From Liam/AI Blog 056 - Claude Skills Part 3.docx` — Part 3.
+- **Daily AI blog voice (Valentina/Liam training pairs)** at `<user home>/Sam/Blogs/Training/`:
+  - `AI Blog 037 - Create Slide deck with NotebookLM Part 2 Valentina.docx` vs `... Liam.docx` — clearest 037 delta.
+  - `AI Blog 038 - NotebookLM Studio Valentina.docx` vs `... Liam.docx`.
+  - `AI Blog 039 - Turn text to video with AI tools Valentina.docx` vs `... Liam.docx`.
+  - DAX 250, 251, 46b Sam/Liam pairs — show the same edit-delta for the DAX series.
+
+  Read at least one pair before drafting any daily AI blog. The Liam version is what gets published; the delta from Valentina is the editing signal.
+
+- **Multi-part series sub-style (Claude Skills 054-056)** at `<project root>/From Liam/`:
+  - `AI Blog 054 - Claude Skills Part 1.docx`
+  - `AI Blog 055 - Claude Skills Part 2.docx`
+  - `AI Blog 056 - Claude Skills Part 3.docx`
 
 ## See Also
 
