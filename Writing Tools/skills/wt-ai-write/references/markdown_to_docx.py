@@ -125,9 +125,24 @@ def _add_image(doc, base_dir: Path, src: str) -> None:
     p.add_run().add_picture(str(img_path), width=Inches(PAGE_WIDTH_INCHES * 0.7))
 
 
-def _add_list_item(doc, text: str) -> None:
-    """List item in Liam's format: 'List Paragraph' style, lead **bold:** then normal."""
+BULLET_NUM_ID = "23"   # Liam's bullet definition from AI Blog 054
+NUMBERED_NUM_ID = "18"  # template's level-0 decimal definition
+
+
+def _add_list_item(doc, text: str, numbered: bool = False) -> None:
+    """List item in Liam's format: 'List Paragraph' style + numbering attached.
+    Uses numId=23 (bullet) by default, numId=18 (decimal) for numbered lists.
+    Both numIds come from the article-template.docx Liam baseline."""
     p = doc.add_paragraph(style="List Paragraph")
+    pPr = p._p.get_or_add_pPr()
+    numPr = OxmlElement("w:numPr")
+    ilvl = OxmlElement("w:ilvl")
+    ilvl.set(qn("w:val"), "0")
+    numId = OxmlElement("w:numId")
+    numId.set(qn("w:val"), NUMBERED_NUM_ID if numbered else BULLET_NUM_ID)
+    numPr.append(ilvl)
+    numPr.append(numId)
+    pPr.append(numPr)
     _inline(p, text)
 
 
@@ -217,14 +232,14 @@ def convert(md_path: Path, out_path: Path, template_path: Path) -> None:
         # numbered list (1. content)
         num = re.match(r"^(\d+)\.\s+(.*)", line)
         if num:
-            _add_list_item(doc, num.group(2))
+            _add_list_item(doc, num.group(2), numbered=True)
             i += 1
             continue
 
         # bullet list (- content) or (* content)
         bullet = re.match(r"^[-*]\s+(.*)", line)
         if bullet:
-            _add_list_item(doc, bullet.group(1))
+            _add_list_item(doc, bullet.group(1), numbered=False)
             i += 1
             continue
 
