@@ -123,7 +123,134 @@ function makeInstance(name) {
 // ----------------------------------------------------------------------------
 // Boot
 // ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Chrome (design-system glue): theme toggle, particle canvas, scroll reveal,
+// navbar shadow on scroll. Runs first so the visuals settle while the
+// manifest fetch is in flight.
+// ----------------------------------------------------------------------------
+function initChrome() {
+    // Theme — persist to localStorage, swap Unicode glyph
+    const themeToggle = document.getElementById('theme-toggle');
+    const saved = localStorage.getItem('theme')
+        || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    document.documentElement.setAttribute('data-theme', saved);
+    themeToggle.innerHTML = saved === 'dark' ? '&#9790;' : '&#9728;';
+    themeToggle.addEventListener('click', () => {
+        const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+        const next = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        themeToggle.innerHTML = next === 'dark' ? '&#9790;' : '&#9728;';
+    });
+
+    // Navbar scrolled shadow past 20px
+    const navbar = document.querySelector('.navbar');
+    const onScroll = () => navbar.classList.toggle('scrolled', window.scrollY > 20);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    // IntersectionObserver for .fade-in + .hero-reveal
+    if ('IntersectionObserver' in window) {
+        const io = new IntersectionObserver((entries) => {
+            for (const e of entries) {
+                if (e.isIntersecting) {
+                    e.target.classList.add('visible');
+                    io.unobserve(e.target);
+                }
+            }
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.fade-in, .hero-reveal').forEach(el => io.observe(el));
+    } else {
+        document.querySelectorAll('.fade-in, .hero-reveal').forEach(el => el.classList.add('visible'));
+    }
+
+    // Particle canvas (3-layer parallax with accent RGB)
+    initParticles();
+}
+
+function initParticles() {
+    const canvas = document.getElementById('hero-particles');
+    if (!canvas || !canvas.getContext) return;
+    const ctx = canvas.getContext('2d');
+    const header = document.querySelector('header.hero');
+
+    function resize() {
+        if (!header) return;
+        const r = header.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width  = r.width  * dpr;
+        canvas.height = r.height * dpr;
+        canvas.style.width  = r.width + 'px';
+        canvas.style.height = r.height + 'px';
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(dpr, dpr);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    const ACCENT = '255, 107, 0';
+    const LAYERS = [
+        { count: 18, speed: 0.12, sizeMin: 0.5, sizeMax: 1.2, alphaMin: 0.15, alphaMax: 0.3,  parallax: 0.02 },
+        { count: 14, speed: 0.25, sizeMin: 1.0, sizeMax: 2.2, alphaMin: 0.35, alphaMax: 0.6,  parallax: 0.05 },
+        { count:  8, speed: 0.45, sizeMin: 1.8, sizeMax: 3.5, alphaMin: 0.55, alphaMax: 0.85, parallax: 0.10 },
+    ];
+
+    const particles = [];
+    for (const layer of LAYERS) {
+        for (let i = 0; i < layer.count; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * layer.speed,
+                vy: (Math.random() - 0.5) * layer.speed,
+                size: layer.sizeMin + Math.random() * (layer.sizeMax - layer.sizeMin),
+                alpha: layer.alphaMin + Math.random() * (layer.alphaMax - layer.alphaMin),
+            });
+        }
+    }
+
+    function tick() {
+        const r = header.getBoundingClientRect();
+        ctx.clearRect(0, 0, r.width, r.height);
+        for (const p of particles) {
+            p.x += p.vx;
+            p.y += p.vy;
+            if (p.x < 0) p.x = r.width;
+            if (p.x > r.width) p.x = 0;
+            if (p.y < 0) p.y = r.height;
+            if (p.y > r.height) p.y = 0;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${ACCENT}, ${p.alpha})`;
+            ctx.fill();
+        }
+        // Connect close pairs with translucent lines
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const d2 = dx * dx + dy * dy;
+                if (d2 < 14400) {
+                    const a = 0.06 * (1 - d2 / 14400);
+                    ctx.strokeStyle = `rgba(${ACCENT}, ${a})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(tick);
+    }
+
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        requestAnimationFrame(tick);
+    }
+}
+
 async function init() {
+    initChrome();
     setStatus('loading manifest', 'busy');
     try {
         const res = await fetch('/api/manifest');

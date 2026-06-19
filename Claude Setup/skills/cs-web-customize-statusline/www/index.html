@@ -1,95 +1,119 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Statusline Customizer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000000" />
+    <title>Statusline Customizer — Sam Ngo</title>
+    <meta name="description" content="A click-to-edit canvas for the PowerShell statusline: drag widgets between cells, recolour each chip, ship without restarting Claude Code." />
     <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
 
-<header class="topbar">
-    <div class="brand">
-        <span class="brand-mark">cs</span>
-        <span class="brand-name">Statusline Customizer</span>
+<nav class="navbar" aria-label="App navigation">
+    <div class="nav-inner">
+        <a class="nav-brand" href="#hero">
+            <span class="brand-mark" aria-hidden="true">吳</span>
+            <span>Statusline</span>
+        </a>
+        <div class="nav-tools">
+            <span id="status-pill" class="status-pill" aria-live="polite">idle</span>
+            <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">&#9790;</button>
+        </div>
     </div>
-    <div class="topbar-actions">
-        <span id="status-pill" class="status-pill idle">idle</span>
-        <button id="btn-reset" class="btn btn-ghost" title="Reset layout/palette to defaults">Reset</button>
-        <button id="btn-apply" class="btn btn-primary">Apply</button>
-        <button id="btn-cancel" class="btn btn-ghost">Cancel</button>
+</nav>
+
+<header class="hero" id="hero">
+    <canvas id="hero-particles" class="hero-canvas" aria-hidden="true"></canvas>
+
+    <div class="hero-inner">
+        <div class="hero-text">
+            <div class="hero-label hero-reveal">Customizer</div>
+            <h1 class="hero-reveal">Compose your <em>statusline</em></h1>
+            <p class="headline hero-reveal">Drag widgets between cells, recolour each chip, ship to ~/.claude — no restart, just refresh.</p>
+            <div class="hero-actions hero-reveal">
+                <button id="btn-apply" class="btn btn-primary">Apply changes</button>
+                <button id="btn-reset" class="btn btn-outline">Reset</button>
+                <button id="btn-cancel" class="btn btn-outline">Cancel</button>
+            </div>
+            <div class="hero-meta hero-reveal">
+                <span>v1.6.0</span>
+                <span>127.0.0.1 only</span>
+                <span>Windows · PowerShell</span>
+            </div>
+        </div>
+
+        <div class="hero-preview hero-reveal">
+            <div class="preview-eyebrow">Live preview · real PowerShell output</div>
+            <div id="preview-area" class="preview-frame">
+                <pre class="statusline placeholder">Loading manifest…</pre>
+            </div>
+        </div>
     </div>
 </header>
 
-<section class="preview-section">
-    <div class="preview-label">Live preview <span class="preview-hint">(rendered from real PowerShell output)</span></div>
-    <div id="preview-area" class="preview-area">
-        <pre class="statusline placeholder">Loading manifest…</pre>
-    </div>
-</section>
+<main class="main-stack">
 
-<main class="grid">
-
-    <aside class="col-left">
-        <div class="card">
-            <h3 class="card-title">Variant</h3>
-            <div id="variant-picker" class="variant-picker"></div>
+    <section class="fade-in" id="layout-section">
+        <h2>Layout</h2>
+        <p class="section-hint">Each line splits into K equal columns. Drag chips between cells to move them. Bar widgets get a width slider on the chip. Spacer chips edit their text and colour inline.</p>
+        <div class="columns-row">
+            <label for="columns-slider">Columns per line</label>
+            <input id="columns-slider" type="range" min="1" max="12" step="1" value="3" />
+            <span id="columns-value">3</span>
         </div>
+        <div id="layout-board" class="layout-board"></div>
+    </section>
 
-        <div class="card">
-            <h3 class="card-title">Palette</h3>
-            <p class="card-hint">Click a palette to set the base</p>
-            <div id="palette-grid" class="palette-grid"></div>
-        </div>
+    <section class="fade-in" id="palette-section">
+        <h2>Palette</h2>
+        <p class="section-hint">Click a base palette. Override individual roles with the custom editor below — values persist to <code>localStorage</code> and survive a refresh.</p>
+        <div id="palette-grid" class="palette-grid"></div>
 
-        <div class="card">
-            <h3 class="card-title">Custom palette <span id="palette-mod-pill" class="badge" style="display:none">modified</span></h3>
-            <p class="card-hint">Override any role. Saved to localStorage.</p>
+        <div class="custom-palette">
+            <div class="custom-palette-header">
+                <h3>Custom roles</h3>
+                <span id="palette-mod-pill" class="tag" style="display:none">modified</span>
+            </div>
             <div id="palette-editor" class="palette-editor"></div>
-            <div class="palette-editor-actions">
-                <button id="btn-palette-reset" class="btn btn-ghost btn-sm">Revert to base</button>
+            <div>
+                <button id="btn-palette-reset" class="btn btn-outline btn-sm">Revert to base</button>
             </div>
         </div>
+    </section>
 
-        <div class="card">
-            <h3 class="card-title">Bar width <span class="badge">Classic only</span></h3>
-            <p class="card-hint">For Extended, drag bar chips in Layout to resize each independently.</p>
-            <div class="slider-row">
-                <input id="bar-width" type="range" min="10" max="50" step="1" value="30" />
-                <span id="bar-width-value">30</span>
+    <section class="fade-in" id="widgets-section">
+        <h2>Widgets</h2>
+        <p class="section-hint">Toggle a widget to add its first instance. The <code>+ duplicate</code> button creates additional copies — each one drags and recolours independently. Remove an instance with the <code>×</code> on its chip in Layout.</p>
+        <div id="widget-groups" class="widget-groups"></div>
+    </section>
+
+    <section class="fade-in" id="classic-section">
+        <h2>Variant &amp; Classic options</h2>
+        <p class="section-hint">Extended is the widget host you are configuring above. Classic is the original monolithic script — these bar-width / line-toggle controls only affect Classic.</p>
+        <div class="classic-grid">
+            <div class="option-block">
+                <h3>Variant</h3>
+                <div id="variant-picker" class="variant-picker"></div>
             </div>
-        </div>
-
-        <div class="card">
-            <h3 class="card-title">Lines to show <span class="badge">Classic only</span></h3>
-            <div id="lines-picker" class="radio-list"></div>
-        </div>
-    </aside>
-
-    <section class="col-right">
-
-        <div class="card">
-            <h3 class="card-title">Layout <span class="badge">drag chips between slots</span></h3>
-            <p class="card-hint">Drag any chip to move it between cells. Drop on an empty cell to place. Bar widgets have a width slider on their chip.</p>
-            <div class="columns-row">
-                <label for="columns-slider">Columns per line</label>
-                <input id="columns-slider" type="range" min="1" max="12" step="1" value="3" />
-                <span id="columns-value">3</span>
+            <div class="option-block">
+                <h3>Bar width <span class="tag">Classic</span></h3>
+                <div class="slider-row">
+                    <input id="bar-width" type="range" min="10" max="50" step="1" value="30" />
+                    <span id="bar-width-value">30</span>
+                </div>
+                <h3 style="margin-top:18px">Lines <span class="tag">Classic</span></h3>
+                <div id="lines-picker" class="radio-list"></div>
             </div>
-            <div id="layout-board" class="layout-board"></div>
-        </div>
-
-        <div class="card">
-            <h3 class="card-title">Widgets</h3>
-            <p class="card-hint">Toggle on/off. Enabled widgets appear as chips in Layout above.</p>
-            <div id="widget-groups" class="widget-groups"></div>
         </div>
     </section>
 
 </main>
 
-<footer class="footer">
-    <span>Loopback only · 127.0.0.1 · this window auto-closes after Apply</span>
+<footer>
+    <div class="footer-mark" aria-hidden="true">吳</div>
+    <div class="footer-tagline">Loopback · 127.0.0.1 · auto-closes after apply</div>
+    <div>&copy; 2026 Sam Ngo — statusline customizer</div>
 </footer>
 
 <script src="/app.js"></script>
