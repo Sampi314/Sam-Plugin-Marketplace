@@ -69,7 +69,14 @@ const PRIMARY_ROLE_BY_WIDGET = {
     'date':                    'C_TIME',
     'cwd':                     'C_SKILL',
     'token-breakdown':         'C_TIME',
+    'tokens-total':            'C_COST',
     'session-time':            'C_TIME',
+    'terminal-width':          'C_LABEL',
+    'commit-hash':             'C_SKILL',
+    'battery':                 'C_GREEN',
+    'uptime':                  'C_TIME',
+    'model':                   'C_MODEL',
+    'session-cost':            'C_COST',
     'skill-audit-general':     'C_SKILL',
     'skill-financial-modelling':'C_SKILL',
     'skill-writing-tools':     'C_SKILL',
@@ -105,11 +112,13 @@ let previewTimer = null;
 let dragInfo = null;
 
 const WIDGET_GROUPS = [
-    { title: 'Core info',            names: ['core-header', 'core-ctx', 'core-work'] },
+    { title: 'Core info',            names: ['core-header', 'model', 'session-cost', 'core-ctx', 'core-work'] },
     { title: 'Rate limits',          names: ['core-rate-5h', 'core-rate-wk'] },
+    { title: 'Tokens',               names: ['token-breakdown', 'tokens-total'] },
     { title: 'Sparklines & signals', names: ['sparkline-cost', 'sparkline-ctx', 'thinking', 'output-style', 'session-fingerprint'] },
-    { title: 'Git & PRs',            names: ['git-status', 'pr-badge'] },
-    { title: 'Clock & path',         names: ['clock', 'date', 'cwd', 'token-breakdown', 'session-time'] },
+    { title: 'Git & PRs',            names: ['git-status', 'pr-badge', 'commit-hash'] },
+    { title: 'Clock & path',         names: ['clock', 'date', 'cwd', 'session-time', 'uptime'] },
+    { title: 'System',               names: ['battery', 'terminal-width'] },
     { title: 'Custom text',          names: ['spacer'] },
     { title: 'Skill overlays',       names: ['skill-audit-general', 'skill-financial-modelling', 'skill-writing-tools'] },
 ];

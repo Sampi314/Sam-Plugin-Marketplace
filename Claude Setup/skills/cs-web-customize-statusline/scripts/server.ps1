@@ -134,6 +134,13 @@ function Get-WidgetDescription([string]$name) {
         'token-breakdown'            { 'Current-tick input / output / cache tokens explicit' }
         'spacer'                     { 'User-customisable text widget (dividers, mottos, badges)' }
         'session-time'               { 'Total active time across sessions (today / week / all)' }
+        'terminal-width'             { 'Current terminal column count (from $env:COLUMNS)' }
+        'tokens-total'               { 'Total input + output tokens for the current tick (single number)' }
+        'commit-hash'                { 'Last git commit SHA (short form), cached 120s' }
+        'battery'                    { 'Laptop battery level via Win32_Battery, hidden on desktops' }
+        'uptime'                     { 'System uptime since last boot' }
+        'model'                      { 'Model name standalone (no effort / cost / project bundle)' }
+        'session-cost'               { 'Session cost standalone (just the $ figure)' }
         default                      { '' }
     }
 }
