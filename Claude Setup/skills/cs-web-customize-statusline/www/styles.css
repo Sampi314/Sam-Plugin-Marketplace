@@ -335,24 +335,72 @@ header.hero::after {
     content: ''; width: 14px; height: 1px; background: var(--accent); opacity: 0.6;
 }
 
-/* The hero preview slot — the "product screenshot" / engineered glass */
+/* Single-column hero text — the live preview lives in its own banner below */
+.hero-inner-text {
+    grid-template-columns: 1fr;
+    max-width: 900px;
+}
 
-.hero-preview {
+/* === Live preview banner (full-width, sticky) =========================== */
+
+.preview-banner {
+    position: sticky;
+    top: 60px;                           /* below the 60px navbar */
+    z-index: 50;
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px 24px;
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+}
+
+.preview-banner-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.preview-banner-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.preview-banner-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.74rem;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+}
+
+.preview-banner-source {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.66rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.7;
+}
+
+.preview-frame {
     background: #06070a;
     border: 1px solid var(--border-strong);
     border-radius: 2px;
-    padding: 20px 22px;
+    padding: 22px 24px;
     position: relative;
-    box-shadow: 0 0 40px var(--accent-glow), 0 20px 60px rgba(0, 0, 0, 0.4);
-    min-height: 140px;
+    box-shadow: 0 0 40px var(--accent-glow), 0 12px 36px rgba(0, 0, 0, 0.45);
+    min-height: 160px;
     overflow-x: auto;
 }
-[data-theme="light"] .hero-preview {
+[data-theme="light"] .preview-frame {
     background: #fffefb;
-    box-shadow: 0 0 30px var(--accent-glow), 0 8px 28px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 0 28px var(--accent-glow), 0 6px 22px rgba(0, 0, 0, 0.06);
 }
 
-.hero-preview::before {
+.preview-frame::before {
     /* Scanline texture — 2% horizontal lines */
     content: '';
     position: absolute;
@@ -368,33 +416,21 @@ header.hero::after {
     border-radius: inherit;
 }
 
-.hero-preview::after {
-    /* Bottom-edge accent glow */
+.preview-frame::after {
     content: '';
     position: absolute;
     left: 0; right: 0; bottom: -1px;
     height: 2px;
     background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    opacity: 0.6;
+    opacity: 0.55;
     border-radius: 0 0 2px 2px;
-}
-
-.hero-preview .preview-eyebrow {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.62rem;
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
-    color: var(--accent);
-    opacity: 0.8;
-    margin-bottom: 10px;
-    position: relative; z-index: 1;
 }
 
 /* The actual <pre class="statusline"> the server returns */
 .statusline {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.78rem;
-    line-height: 1.65;
+    font-size: 0.92rem;
+    line-height: 1.75;
     color: var(--text-primary);
     margin: 0;
     white-space: pre;
@@ -528,6 +564,120 @@ input[type=number]:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-glow);
     outline: none;
+}
+
+/* === Compose section: pool (left) + board (right) ====================== */
+
+.compose-grid {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 18px;
+    align-items: start;
+}
+
+.widget-pool {
+    position: sticky;
+    top: 220px;                          /* below sticky preview banner */
+    background: var(--bg-card-alt);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 14px 12px;
+    max-height: calc(100vh - 240px);
+    overflow-y: auto;
+}
+
+.widget-pool-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.widget-pool-head h4 { margin: 0; }
+
+.widget-pool-hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.widget-pool-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pool-chip {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 8px 10px;
+    cursor: grab;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    transition: border-color 0.18s, background 0.18s, transform 0.12s;
+    position: relative;
+}
+.pool-chip:hover {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+    transform: translateX(2px);
+}
+.pool-chip.dragging {
+    opacity: 0.35;
+    cursor: grabbing;
+}
+
+.pool-chip-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.pool-chip-name strong {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+}
+.pool-chip-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--accent);
+    padding: 0 6px;
+    background: var(--accent-glow);
+    border-radius: 999px;
+    border: 1px solid var(--border);
+}
+
+.pool-chip-line {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.56rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-left: auto;
+}
+
+.pool-chip-desc {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+@media (max-width: 900px) {
+    .compose-grid { grid-template-columns: 1fr; }
+    .widget-pool {
+        position: static;
+        max-height: 220px;
+    }
 }
 
 /* === Layout panel (grid of columns × lines) ============================= */

@@ -280,7 +280,7 @@ async function init() {
     renderPalettes();
     renderCustomPaletteEditor();
     renderLayout();
-    renderWidgets();
+    renderWidgetPool();
     renderLines();
     renderBarWidth();
     wireButtons();
@@ -494,14 +494,25 @@ function makeSlot(line, column, items) {
         e.preventDefault();
         slot.classList.remove('dragover-active');
         if (!dragInfo) return;
-        const inst = state.instances.find(i => i.id === dragInfo.instanceId);
-        if (!inst) return;
+
+        // dragInfo.source distinguishes a pool drag (create new instance)
+        // from a layout drag (move existing instance).
+        let inst;
+        if (dragInfo.source === 'pool') {
+            inst = makeInstance(dragInfo.name);
+            if (!inst) return;
+            state.instances.push(inst);
+        } else {
+            inst = state.instances.find(i => i.id === dragInfo.instanceId);
+            if (!inst) return;
+        }
         inst.line = line;
         inst.column = column;
         const peers = state.instances.filter(o => o !== inst && o.line === line && (o.column ?? 1) === column).map(o => o.priority ?? 100);
         inst.priority = (peers.length ? Math.max(...peers) : 0) + 10;
         persist();
         renderLayout();
+        renderWidgetPool();
         schedulePreview();
     });
 
@@ -534,7 +545,7 @@ function makeChip(inst) {
     chip.innerHTML = chipHtml;
 
     chip.addEventListener('dragstart', (e) => {
-        dragInfo = { instanceId: inst.id };
+        dragInfo = { source: 'layout', instanceId: inst.id };
         chip.classList.add('dragging');
         try { e.dataTransfer.setData('text/plain', inst.id); } catch {}
         e.dataTransfer.effectAllowed = 'move';
@@ -590,7 +601,7 @@ function makeChip(inst) {
         if (idx >= 0) state.instances.splice(idx, 1);
         persist();
         renderLayout();
-        renderWidgets();
+        renderWidgetPool();
         schedulePreview();
     });
     closeBtn.addEventListener('mousedown',   (e) => e.stopPropagation());
@@ -601,74 +612,57 @@ function makeChip(inst) {
 }
 
 // ----------------------------------------------------------------------------
-// Widget toggles + duplicate button
+// Widget pool — draggable source of widget templates. Drop into a layout
+// slot to create a new instance. Drop the same widget twice = duplicate.
 // ----------------------------------------------------------------------------
-function renderWidgets() {
-    const root = document.getElementById('widget-groups');
+function renderWidgetPool() {
+    const root = document.getElementById('widget-pool');
+    if (!root) return;
     root.innerHTML = '';
     const allWidgets = manifest.widgets.filter(w => w.name !== 'mode-aware');
+
+    // Order: walk WIDGET_GROUPS for stable grouping, fall through to leftovers
+    const ordered = [];
     const seen = new Set();
     for (const group of WIDGET_GROUPS) {
-        const groupWidgets = group.names.map(n => allWidgets.find(w => w.name === n)).filter(Boolean);
-        if (!groupWidgets.length) continue;
-        groupWidgets.forEach(w => seen.add(w.name));
-        root.appendChild(renderWidgetGroup(group.title, groupWidgets));
+        for (const name of group.names) {
+            const w = allWidgets.find(x => x.name === name);
+            if (w && !seen.has(w.name)) { ordered.push(w); seen.add(w.name); }
+        }
     }
-    const orphans = allWidgets.filter(w => !seen.has(w.name));
-    if (orphans.length) root.appendChild(renderWidgetGroup('Other', orphans));
+    for (const w of allWidgets) {
+        if (!seen.has(w.name)) ordered.push(w);
+    }
+
+    for (const w of ordered) root.appendChild(makePoolChip(w));
 }
 
-function renderWidgetGroup(title, widgets) {
-    const wrap = document.createElement('div');
-    wrap.className = 'widget-group';
-    const h = document.createElement('h4');
-    h.textContent = title;
-    wrap.appendChild(h);
-    const list = document.createElement('div');
-    list.className = 'widget-list';
-    for (const w of widgets) {
-        const count = instancesOf(w.name).length;
-        const isOn = count > 0;
-        const item = document.createElement('div');
-        item.className = 'widget-item' + (isOn ? ' selected' : '');
-        item.innerHTML = `
-            <label class="widget-item-toggle">
-                <input type="checkbox" ${isOn ? 'checked' : ''} />
-                <div class="widget-meta">
-                    <div class="widget-name">${w.name}${count > 1 ? ` <span class="widget-count">× ${count}</span>` : ''}</div>
-                    <div class="widget-desc">${w.description || ''}</div>
-                </div>
-                <span class="widget-line">L${w.line ?? '?'}</span>
-            </label>
-            <button class="widget-add" title="Add another instance" ${isOn ? '' : 'disabled'}>+ duplicate</button>
-        `;
-        const checkbox = item.querySelector('input[type=checkbox]');
-        checkbox.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                const inst = makeInstance(w.name);
-                if (inst) state.instances.push(inst);
-            } else {
-                state.instances = state.instances.filter(i => i.name !== w.name);
-            }
-            persist();
-            renderLayout();
-            renderWidgets();
-            schedulePreview();
-        });
-        const addBtn = item.querySelector('.widget-add');
-        addBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const inst = makeInstance(w.name);
-            if (inst) state.instances.push(inst);
-            persist();
-            renderLayout();
-            renderWidgets();
-            schedulePreview();
-        });
-        list.appendChild(item);
-    }
-    wrap.appendChild(list);
-    return wrap;
+function makePoolChip(w) {
+    const chip = document.createElement('div');
+    chip.className = 'pool-chip';
+    chip.draggable = true;
+    chip.dataset.widget = w.name;
+    const count = instancesOf(w.name).length;
+    chip.innerHTML = `
+        <div class="pool-chip-name">
+            <strong>${w.name}</strong>
+            ${count ? `<span class="pool-chip-count">${count}</span>` : ''}
+            <span class="pool-chip-line">L${w.line ?? '?'}</span>
+        </div>
+        <div class="pool-chip-desc">${w.description || ''}</div>
+    `;
+    chip.addEventListener('dragstart', (e) => {
+        dragInfo = { source: 'pool', name: w.name };
+        chip.classList.add('dragging');
+        try { e.dataTransfer.setData('text/plain', w.name); } catch {}
+        e.dataTransfer.effectAllowed = 'copy';
+    });
+    chip.addEventListener('dragend', () => {
+        chip.classList.remove('dragging');
+        document.querySelectorAll('.layout-slot.dragover-active').forEach(s => s.classList.remove('dragover-active'));
+        dragInfo = null;
+    });
+    return chip;
 }
 
 // ----------------------------------------------------------------------------
@@ -814,14 +808,14 @@ function onReset() {
             id: `${w.name}#1`,
             name: w.name,
             line: w.line || 1,
-            position: w.position || 'left',
+            column: positionToColumn(w.position || 'left', state.columns),
             priority: w.priority ?? 100,
         });
     }
     persist();
     renderCustomPaletteEditor();
     renderLayout();
-    renderWidgets();
+    renderWidgetPool();
     schedulePreview();
 }
 

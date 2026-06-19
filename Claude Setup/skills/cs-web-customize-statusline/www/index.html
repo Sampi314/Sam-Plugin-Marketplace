@@ -26,43 +26,55 @@
 <header class="hero" id="hero">
     <canvas id="hero-particles" class="hero-canvas" aria-hidden="true"></canvas>
 
-    <div class="hero-inner">
-        <div class="hero-text">
-            <div class="hero-label hero-reveal">Customizer</div>
-            <h1 class="hero-reveal">Compose your <em>statusline</em></h1>
-            <p class="headline hero-reveal">Drag widgets between cells, recolour each chip, ship to ~/.claude — no restart, just refresh.</p>
-            <div class="hero-actions hero-reveal">
-                <button id="btn-apply" class="btn btn-primary">Apply changes</button>
-                <button id="btn-reset" class="btn btn-outline">Reset</button>
-                <button id="btn-cancel" class="btn btn-outline">Cancel</button>
-            </div>
-            <div class="hero-meta hero-reveal">
-                <span>v1.6.0</span>
-                <span>127.0.0.1 only</span>
-                <span>Windows · PowerShell</span>
-            </div>
+    <div class="hero-inner hero-inner-text">
+        <div class="hero-label hero-reveal">Customizer</div>
+        <h1 class="hero-reveal">Compose your <em>statusline</em></h1>
+        <p class="headline hero-reveal">Drag widgets between cells, recolour each chip, ship to ~/.claude — no restart, just refresh.</p>
+        <div class="hero-actions hero-reveal">
+            <button id="btn-apply" class="btn btn-primary">Apply changes</button>
+            <button id="btn-reset" class="btn btn-outline">Reset</button>
+            <button id="btn-cancel" class="btn btn-outline">Cancel</button>
         </div>
-
-        <div class="hero-preview hero-reveal">
-            <div class="preview-eyebrow">Live preview · real PowerShell output</div>
-            <div id="preview-area" class="preview-frame">
-                <pre class="statusline placeholder">Loading manifest…</pre>
-            </div>
+        <div class="hero-meta hero-reveal">
+            <span>v1.6.0</span>
+            <span>127.0.0.1 only</span>
+            <span>Windows · PowerShell</span>
         </div>
     </div>
 </header>
 
+<aside class="preview-banner" aria-label="Live preview">
+    <div class="preview-banner-inner">
+        <div class="preview-banner-head">
+            <span class="preview-banner-label">// live preview</span>
+            <span class="preview-banner-source">real PowerShell output · mock data</span>
+        </div>
+        <div id="preview-area" class="preview-frame">
+            <pre class="statusline placeholder">Loading manifest…</pre>
+        </div>
+    </div>
+</aside>
+
 <main class="main-stack">
 
     <section class="fade-in" id="layout-section">
-        <h2>Layout</h2>
-        <p class="section-hint">Each line splits into K equal columns. Drag chips between cells to move them. Bar widgets get a width slider on the chip. Spacer chips edit their text and colour inline.</p>
+        <h2>Compose</h2>
+        <p class="section-hint">Drag any widget from the pool on the left into a cell on the right. Each drop creates a new instance — drop the same widget twice for a duplicate. Drag chips inside the board to move them. Bar widgets get a width slider on the chip; spacer chips have inline text + colour pickers. Click × on a chip to remove that instance.</p>
         <div class="columns-row">
             <label for="columns-slider">Columns per line</label>
             <input id="columns-slider" type="range" min="1" max="12" step="1" value="3" />
             <span id="columns-value">3</span>
         </div>
-        <div id="layout-board" class="layout-board"></div>
+        <div class="compose-grid">
+            <aside class="widget-pool">
+                <div class="widget-pool-head">
+                    <h4>Widget pool</h4>
+                    <span class="widget-pool-hint">drag &rarr;</span>
+                </div>
+                <div id="widget-pool" class="widget-pool-list"></div>
+            </aside>
+            <div id="layout-board" class="layout-board"></div>
+        </div>
     </section>
 
     <section class="fade-in" id="palette-section">
@@ -80,12 +92,6 @@
                 <button id="btn-palette-reset" class="btn btn-outline btn-sm">Revert to base</button>
             </div>
         </div>
-    </section>
-
-    <section class="fade-in" id="widgets-section">
-        <h2>Widgets</h2>
-        <p class="section-hint">Toggle a widget to add its first instance. The <code>+ duplicate</code> button creates additional copies — each one drags and recolours independently. Remove an instance with the <code>×</code> on its chip in Layout.</p>
-        <div id="widget-groups" class="widget-groups"></div>
     </section>
 
     <section class="fade-in" id="classic-section">
