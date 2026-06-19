@@ -22,6 +22,11 @@
       "name": "writing-tools",
       "source": "./Writing Tools",
       "description": "Editorial toolkit in Liam Bastick's voice: a DAX function blog writer, a book-length prose writer, an auditor that checks articles against UK English and house style rules with tracked-changes Word output, and a daily AI blog pipeline (search → plan → write) that produces short-form AI news posts with brand-styled Gemini images and Mermaid flow charts."
+    },
+    {
+      "name": "claude-setup",
+      "source": "./Claude Setup",
+      "description": "Claude Code setup utilities for Sam's multi-line PowerShell statusline (model + costs, context fill bar, 5-hour and weekly usage bars, burn rate, work duration and diff stats). Two variants — Classic single-script (six palettes, configurable bar width, line toggles) and Extended widget platform (Braille sparklines, mode-aware layout, OSC 8 clickable links, skill-aware overlays for the SumProduct stack, NDJSON events stream) — plus an interactive customizer skill that walks users through every choice with live in-terminal previews. Windows-only."
     }
   ]
 }
