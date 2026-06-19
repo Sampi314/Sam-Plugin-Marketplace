@@ -83,6 +83,27 @@ $colors = @{
     C_ITALIC  = $ansi.Italic()
 }
 
+# --- Optional palette override (env: CS_PALETTE_OVERRIDE) --------------------
+# Lets a customizer (web UI, wizard) preview alternative palettes without
+# rewriting this script. No-op unless the env var matches a known name.
+if ($env:CS_PALETTE_OVERRIDE) {
+    $paletteOverrides = @{
+        'Sam'          = @{ C_MODEL='180 140 255'; C_SKILL='130 220 200'; C_COST='255 220 80'; C_PROJCST='255 160 100'; C_ADD='130 220 130'; C_DEL='255 100 100'; C_TIME='130 180 255'; C_COUNT='200 170 255'; C_CYAN='80 220 220'; C_GOLD='255 200 60' }
+        'Monochrome'   = @{ C_MODEL='220 220 220'; C_SKILL='180 180 180'; C_COST='240 240 240'; C_PROJCST='200 200 200'; C_ADD='200 200 200'; C_DEL='160 160 160'; C_TIME='170 170 170'; C_COUNT='180 180 180'; C_CYAN='200 200 200'; C_GOLD='220 220 220' }
+        'HighContrast' = @{ C_MODEL='255 0 255';   C_SKILL='0 255 255';   C_COST='255 255 0';   C_PROJCST='255 128 0';   C_ADD='0 255 0';     C_DEL='255 0 0';     C_TIME='0 128 255';   C_COUNT='255 0 255';   C_CYAN='0 255 255';   C_GOLD='255 255 0' }
+        'Solarized'    = @{ C_MODEL='108 113 196'; C_SKILL='42 161 152';  C_COST='181 137 0';   C_PROJCST='203 75 22';   C_ADD='133 153 0';   C_DEL='220 50 47';   C_TIME='38 139 210';  C_COUNT='211 54 130';  C_CYAN='42 161 152';  C_GOLD='181 137 0' }
+        'Nord'         = @{ C_MODEL='180 142 173'; C_SKILL='143 188 187'; C_COST='235 203 139'; C_PROJCST='208 135 112'; C_ADD='163 190 140'; C_DEL='191 97 106';  C_TIME='129 161 193'; C_COUNT='180 142 173'; C_CYAN='136 192 208'; C_GOLD='235 203 139' }
+        'Dracula'      = @{ C_MODEL='189 147 249'; C_SKILL='139 233 253'; C_COST='241 250 140'; C_PROJCST='255 184 108'; C_ADD='80 250 123';  C_DEL='255 85 85';   C_TIME='139 233 253'; C_COUNT='255 121 198'; C_CYAN='139 233 253'; C_GOLD='241 250 140' }
+    }
+    if ($paletteOverrides.ContainsKey($env:CS_PALETTE_OVERRIDE)) {
+        $pal = $paletteOverrides[$env:CS_PALETTE_OVERRIDE]
+        foreach ($key in $pal.Keys) {
+            $t = $pal[$key] -split '\s+'
+            $colors[$key] = $ansi.Fg([int]$t[0], [int]$t[1], [int]$t[2])
+        }
+    }
+}
+
 # --- Terminal width (Bundle B foundation) ------------------------------------
 $termWidth = 100
 if ($env:COLUMNS) {

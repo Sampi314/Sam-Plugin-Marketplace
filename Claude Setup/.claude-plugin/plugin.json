@@ -1,6 +1,6 @@
 {
   "name": "claude-setup",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Claude Code setup utilities: installs Sam's multi-line PowerShell statusline (model, session/project cost, context fill bar, 5-hour and weekly usage bars, burn rate, work duration and diff stats) into your ~/.claude/ folder and wires up settings.json. Windows-only — depends on Windows Credential Manager for OAuth and Windows paths. Two variants: Classic single-script statusline (~860 lines, six colour palettes, configurable bar width and line toggles) and Extended widget platform (built-in rate_limits, Braille high-density sparklines, adaptive mode-aware layout, OSC 8 clickable links, terminal capability probing, plus a pluggable widget pack with skill-aware overlays for the SumProduct stack). Includes an interactive customizer skill that walks users through every choice with live in-terminal previews before applying. Update command pulls the latest baseline from this marketplace.",
   "author": {
     "name": "SumProduct",

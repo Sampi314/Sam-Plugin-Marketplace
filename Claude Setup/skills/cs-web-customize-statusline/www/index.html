@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Statusline Customizer</title>
+    <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+    <div class="brand">
+        <span class="brand-mark">cs</span>
+        <span class="brand-name">Statusline Customizer</span>
+    </div>
+    <div class="topbar-actions">
+        <span id="status-pill" class="status-pill idle">idle</span>
+        <button id="btn-apply" class="btn btn-primary">Apply</button>
+        <button id="btn-cancel" class="btn btn-ghost">Cancel</button>
+    </div>
+</header>
+
+<section class="preview-section">
+    <div class="preview-label">Live preview <span class="preview-hint">(rendered from real PowerShell output)</span></div>
+    <div id="preview-area" class="preview-area">
+        <pre class="statusline placeholder">Loading manifest…</pre>
+    </div>
+</section>
+
+<main class="grid">
+
+    <aside class="col-left">
+        <div class="card">
+            <h3 class="card-title">Variant</h3>
+            <div id="variant-picker" class="variant-picker"></div>
+        </div>
+
+        <div class="card">
+            <h3 class="card-title">Palette</h3>
+            <p class="card-hint">Click a palette to preview it</p>
+            <div id="palette-grid" class="palette-grid"></div>
+        </div>
+
+        <div class="card">
+            <h3 class="card-title">Bar width</h3>
+            <p class="card-hint">Width of CTX / 5H / WK bars (cells)</p>
+            <div class="slider-row">
+                <input id="bar-width" type="range" min="10" max="50" step="5" value="30" />
+                <span id="bar-width-value">30</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 class="card-title">Lines to show <span class="badge">Classic only</span></h3>
+            <div id="lines-picker" class="radio-list"></div>
+        </div>
+    </aside>
+
+    <section class="col-right">
+        <div class="card">
+            <h3 class="card-title">Widgets</h3>
+            <p class="card-hint">Toggle to add / remove. <code>mode-aware</code> is always on (it controls layout).</p>
+            <div id="widget-groups" class="widget-groups"></div>
+        </div>
+    </section>
+
+</main>
+
+<footer class="footer">
+    <span>Loopback only · 127.0.0.1 · this window auto-closes after Apply</span>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>
