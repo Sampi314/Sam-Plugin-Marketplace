@@ -176,40 +176,98 @@ if (-not $env:CS_PREVIEW_MODE -and (Get-Command Emit-Event -ErrorAction Silently
 }
 
 # --- Discover widgets and render ---------------------------------------------
-$widgets = Get-WidgetManifests -BundledDirs @() -UserDirs @($WidgetsDir)
+# Discover base widget manifests from the install/widgets dir. These are the
+# *templates*; the actual render set is determined by the instance list below.
+$baseManifests = @{}
+foreach ($w in (Get-WidgetManifests -BundledDirs @() -UserDirs @($WidgetsDir))) {
+    if ($w.Name) { $baseManifests[$w.Name] = $w }
+}
 
-# Optional allowlist (env: CS_WIDGETS_ALLOW) — comma-separated widget names.
-# Used by the web customizer to filter widgets without copying files.
-if ($env:CS_WIDGETS_ALLOW) {
-    $allow = @($env:CS_WIDGETS_ALLOW -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-    if ($allow.Count -gt 0) {
-        $allow += 'mode-aware'   # layout host is essential
-        $widgets = @($widgets | Where-Object { $allow -contains $_.Name })
+# Helper: clone a base manifest so per-instance State overrides don't bleed
+# back into the template. Render is reference-shared (it's pure code).
+function Clone-WidgetForInstance($base, $instanceId) {
+    $clone = @{}
+    foreach ($k in $base.Keys) {
+        if ($k -eq 'State') {
+            $sc = @{}
+            if ($base.State) { foreach ($sk in $base.State.Keys) { $sc[$sk] = $base.State[$sk] } }
+            $clone[$k] = $sc
+        } else { $clone[$k] = $base[$k] }
+    }
+    $clone._InstanceId = $instanceId
+    return $clone
+}
+
+# Resolve the instance list. Source precedence:
+#   1. $env:CS_LAYOUT_OVERRIDE  (set by the web customizer for preview)
+#   2. ~/.claude/statusline-instances.json  (written by apply.ps1 for production)
+#   3. fall back to one instance per base manifest at its declared defaults
+$instanceSource = $null
+if ($env:CS_LAYOUT_OVERRIDE) {
+    try { $instanceSource = $env:CS_LAYOUT_OVERRIDE | ConvertFrom-Json -ErrorAction Stop } catch {}
+}
+if (-not $instanceSource) {
+    $instancesFile = Join-Path $ClaudeDir 'statusline-instances.json'
+    if (Test-Path $instancesFile) {
+        try { $instanceSource = Get-Content $instancesFile -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop } catch {}
     }
 }
 
-# Optional layout / state override (env: CS_LAYOUT_OVERRIDE) — JSON keyed by
-# widget Name. The reserved fields {line, position, priority} map to the
-# manifest's Line/Position/Priority. Any other field is copied to the widget's
-# $state — so widgets can read e.g. $state.barWidth, $state.text, $state.color
-# without each one needing its own env var.
-$reservedLayoutKeys = @('line','position','priority')
-if ($env:CS_LAYOUT_OVERRIDE) {
-    try {
-        $layoutOverride = $env:CS_LAYOUT_OVERRIDE | ConvertFrom-Json -ErrorAction Stop
-        foreach ($w in $widgets) {
-            $entry = $layoutOverride.($w.Name)
-            if (-not $entry) { continue }
-            if ($null -ne $entry.line)     { $w.Line     = [int]$entry.line }
-            if ($entry.position)           { $w.Position = [string]$entry.position }
-            if ($null -ne $entry.priority) { $w.Priority = [int]$entry.priority }
-            if (-not $w.State) { $w.State = @{} }
-            foreach ($prop in $entry.PSObject.Properties) {
-                if ($reservedLayoutKeys -contains $prop.Name) { continue }
-                $w.State[$prop.Name] = $prop.Value
-            }
+# Build the render set. Three input shapes accepted:
+#   - Array of {id, name, line, position, priority, ...state}  (instance list)
+#   - Object {name: {line,position,priority,...state}}         (legacy, one instance per key)
+#   - $null                                                    (one instance per base, defaults)
+$reservedLayoutKeys = @('id','name','line','position','priority')
+$widgets = @()
+if ($instanceSource -is [System.Collections.IList]) {
+    foreach ($entry in $instanceSource) {
+        if (-not $entry.name) { continue }
+        $base = $baseManifests[[string]$entry.name]
+        if (-not $base) { continue }
+        $id = if ($entry.id) { [string]$entry.id } else { "$($entry.name)-$([guid]::NewGuid().ToString('N').Substring(0,4))" }
+        $w = Clone-WidgetForInstance $base $id
+        if ($null -ne $entry.line)     { $w.Line     = [int]$entry.line }
+        if ($entry.position)           { $w.Position = [string]$entry.position }
+        if ($null -ne $entry.priority) { $w.Priority = [int]$entry.priority }
+        foreach ($prop in $entry.PSObject.Properties) {
+            if ($reservedLayoutKeys -contains $prop.Name) { continue }
+            $w.State[$prop.Name] = $prop.Value
         }
-    } catch {}
+        $widgets += ,$w
+    }
+    # The layout host is structural — always include even if the SPA forgot it
+    if (-not ($widgets | Where-Object { $_.Name -eq 'mode-aware' })) {
+        if ($baseManifests.ContainsKey('mode-aware')) {
+            $widgets += ,(Clone-WidgetForInstance $baseManifests['mode-aware'] 'mode-aware-host')
+        }
+    }
+} elseif ($instanceSource) {
+    # Legacy object form — one instance per key
+    foreach ($prop in $instanceSource.PSObject.Properties) {
+        $base = $baseManifests[$prop.Name]
+        if (-not $base) { continue }
+        $entry = $prop.Value
+        $w = Clone-WidgetForInstance $base $prop.Name
+        if ($null -ne $entry.line)     { $w.Line     = [int]$entry.line }
+        if ($entry.position)           { $w.Position = [string]$entry.position }
+        if ($null -ne $entry.priority) { $w.Priority = [int]$entry.priority }
+        foreach ($sp in $entry.PSObject.Properties) {
+            if ($reservedLayoutKeys -contains $sp.Name) { continue }
+            $w.State[$sp.Name] = $sp.Value
+        }
+        $widgets += ,$w
+    }
+    # Add any base widget not in the override (keeps "all-widgets" production behaviour)
+    foreach ($name in $baseManifests.Keys) {
+        if (-not ($widgets | Where-Object { $_.Name -eq $name })) {
+            $widgets += ,(Clone-WidgetForInstance $baseManifests[$name] $name)
+        }
+    }
+} else {
+    # No override anywhere — one instance per base at its declared defaults
+    foreach ($name in $baseManifests.Keys) {
+        $widgets += ,(Clone-WidgetForInstance $baseManifests[$name] $name)
+    }
 }
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8

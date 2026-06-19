@@ -25,7 +25,9 @@ param(
     [string]$Palette = 'Sam',
     [int]$BarWidth = 30,
     [ValidateSet('all','no5h','nowk','nowork','essentials')]
-    [string]$Lines = 'all'
+    [string]$Lines = 'all',
+    [string]$InstancesJson = '',     # Array of {id, name, line, position, priority, ...state}
+    [string]$CustomPaletteJson = ''  # Object {C_MODEL: "R G B", ...}
 )
 
 $ErrorActionPreference = 'Stop'
@@ -107,20 +109,56 @@ foreach ($existing in (Get-ChildItem $TargetWidgets -Filter '*.ps1' -ErrorAction
 }
 
 $copied = 0
-$allow = if ($Widgets) { @($Widgets -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) } else { @() }
-# Mode-aware widget is essential for layout; always include if any widget is on
-if ($allow.Count -gt 0) { $allow += 'mode-aware' }
+# When instances are provided, install ALL bundled widget files so any instance
+# can reference any base widget. The instance list (written below) controls
+# what renders. The legacy $Widgets allowlist is only used when no instances
+# are provided (single-instance-per-name path).
+$useInstances = -not [string]::IsNullOrEmpty($InstancesJson)
+$allow = if (-not $useInstances -and $Widgets) {
+    @($Widgets -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+} else { @() }
+if (-not $useInstances -and $allow.Count -gt 0) { $allow += 'mode-aware' }
 
 foreach ($w in (Get-ChildItem $BundledWidgets -Filter '*.ps1')) {
     $name = $null
     try { $m = & $w.FullName; $name = $m.Name } catch {}
     if (-not $name) { continue }
-    if ($allow.Count -eq 0 -or ($allow -contains $name)) {
+    if ($useInstances -or $allow.Count -eq 0 -or ($allow -contains $name)) {
         Copy-Item $w.FullName $TargetWidgets -Force
         $copied++
     }
 }
-Write-Ok "Widgets installed ($copied selected)"
+Write-Ok "Widgets installed ($copied total)"
+
+# Write the instance config sidecar — statusline-extended.ps1 reads this at
+# runtime when CS_LAYOUT_OVERRIDE isn't set. Always overwrite (no merge with
+# any prior file — the customizer is the source of truth at install time).
+$InstancesFile = Join-Path $ClaudeDir 'statusline-instances.json'
+if ($useInstances) {
+    if (Test-Path $InstancesFile) {
+        Copy-Item $InstancesFile "$InstancesFile.bak.$Stamp" -Force
+    }
+    Set-Content -Path $InstancesFile -Value $InstancesJson -Encoding UTF8
+    Write-Ok "statusline-instances.json written"
+} else {
+    # Remove a stale sidecar if a previous install wrote one
+    if (Test-Path $InstancesFile) {
+        Move-Item $InstancesFile "$InstancesFile.bak.$Stamp" -Force
+        Write-Ok "statusline-instances.json (legacy install) moved to backup"
+    }
+}
+
+# Write the custom palette sidecar (read by the extended script via env var
+# at preview time and from this file at runtime).
+$PaletteFile = Join-Path $ClaudeDir 'statusline-palette.json'
+if ($CustomPaletteJson) {
+    if (Test-Path $PaletteFile) { Copy-Item $PaletteFile "$PaletteFile.bak.$Stamp" -Force }
+    Set-Content -Path $PaletteFile -Value $CustomPaletteJson -Encoding UTF8
+    Write-Ok "statusline-palette.json written"
+} elseif (Test-Path $PaletteFile) {
+    Move-Item $PaletteFile "$PaletteFile.bak.$Stamp" -Force
+    Write-Ok "statusline-palette.json (no custom colours) moved to backup"
+}
 
 # Terminal probe
 try {

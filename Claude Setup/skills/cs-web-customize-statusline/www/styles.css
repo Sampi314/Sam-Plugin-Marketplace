@@ -614,6 +614,81 @@ html, body {
     cursor: pointer;
 }
 
+.layout-chip .chip-id {
+    font-size: 9px;
+    color: var(--fg-2);
+    padding: 0 4px;
+    background: var(--bg-1);
+    border-radius: 999px;
+    margin-left: -2px;
+}
+
+.layout-chip .chip-close {
+    background: transparent;
+    color: var(--fg-2);
+    border: none;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 4px;
+    cursor: pointer;
+    border-radius: 999px;
+    margin-left: 2px;
+}
+
+.layout-chip .chip-close:hover {
+    color: var(--danger);
+    background: rgba(224, 108, 117, 0.12);
+}
+
+/* --- Widget toggle item w/ duplicate button --------------------------- */
+
+.widget-item {
+    /* Override the older single-row look — toggle + add are siblings now */
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 10px;
+}
+
+.widget-item-toggle {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.widget-item-toggle input { accent-color: var(--accent); margin-top: 2px; }
+
+.widget-count {
+    font-size: 10px;
+    color: var(--fg-2);
+    padding: 0 6px;
+    background: var(--bg-3);
+    border-radius: 999px;
+    margin-left: 4px;
+}
+
+.widget-add {
+    align-self: flex-end;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--fg-1);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.widget-add:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.widget-add:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
 /* --- Footer --------------------------------------------------------- */
 
 .footer {

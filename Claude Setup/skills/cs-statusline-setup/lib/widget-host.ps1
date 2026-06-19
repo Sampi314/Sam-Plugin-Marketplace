@@ -77,9 +77,12 @@ function Test-WidgetCapabilities {
 function Invoke-WidgetRender {
     param($Widget, $Ctx, $Caps, $Colors, $Ansi)
 
-    # Per-widget caching by RefreshEvery
+    # Per-widget caching by RefreshEvery — keyed by instance id (set by the
+    # entry script when cloning a base manifest) so duplicate instances of the
+    # same widget Name don't share a cache slot.
+    $widgetId = if ($Widget._InstanceId) { $Widget._InstanceId } else { $Widget.Name }
     if ($Widget.RefreshEvery -gt 0) {
-        $cacheKey = "$($Widget.Name)|$($Ctx.session_id)"
+        $cacheKey = "$widgetId|$($Ctx.session_id)"
         $entry = $script:WIDGET_CACHE[$cacheKey]
         if ($entry) {
             $age = ((Get-Date) - $entry.Stamp).TotalSeconds
@@ -103,7 +106,7 @@ function Invoke-WidgetRender {
     }
 
     if ($Widget.RefreshEvery -gt 0) {
-        $cacheKey = "$($Widget.Name)|$($Ctx.session_id)"
+        $cacheKey = "$widgetId|$($Ctx.session_id)"
         $script:WIDGET_CACHE[$cacheKey] = @{ Stamp = Get-Date; Output = $output }
     }
 

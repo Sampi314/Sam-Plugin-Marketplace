@@ -176,12 +176,11 @@ try {
 function Render-Preview {
     param(
         [string]$Variant,
-        [string[]]$Widgets,
+        [object]$Instances = $null,       # Array of {id,name,line,position,priority,...state}
         [string]$Palette,
         [int]$BarWidth,
         [string]$Lines,
-        [object]$CustomPalette = $null,   # PSCustomObject: role -> "R G B"
-        [object]$Layout       = $null     # PSCustomObject: widgetName -> {line,position,priority,barWidth}
+        [object]$CustomPalette = $null    # PSCustomObject: role -> "R G B"
     )
 
     if ($Variant -eq 'Classic') {
@@ -194,7 +193,6 @@ function Render-Preview {
     # Snapshot env so we restore cleanly even on error
     $prev = @{
         CS_BUNDLE_ROOT          = $env:CS_BUNDLE_ROOT
-        CS_WIDGETS_ALLOW        = $env:CS_WIDGETS_ALLOW
         CS_PALETTE_OVERRIDE     = $env:CS_PALETTE_OVERRIDE
         CS_PALETTE_CUSTOM_JSON  = $env:CS_PALETTE_CUSTOM_JSON
         CS_LAYOUT_OVERRIDE      = $env:CS_LAYOUT_OVERRIDE
@@ -206,24 +204,33 @@ function Render-Preview {
         $env:CS_PALETTE_OVERRIDE = $Palette
         $env:CS_PREVIEW_MODE     = '1'
 
-        # Widget allowlist
-        $allow = @($Widgets | ForEach-Object { ([string]$_).Trim() } | Where-Object { $_ })
-        $env:CS_WIDGETS_ALLOW = if ($allow.Count -gt 0) { $allow -join ',' } else { $null }
+        # Instances are the single source of truth. The bundled script accepts
+        # CS_LAYOUT_OVERRIDE as either an array (instance list) or an object
+        # (legacy keyed-by-name). The SPA always sends the array form.
+        $instanceList = @()
+        if ($Instances) {
+            foreach ($i in $Instances) { $instanceList += ,$i }
+        }
 
-        # Per-bar widths fold into Layout overrides so we don't need yet another env var.
-        # Caller's $Layout is authoritative; we add a default barWidth for the three bar
-        # widgets if Layout has no entry for them.
-        $effectiveLayout = if ($Layout) { $Layout } else { [PSCustomObject]@{} }
+        # Apply the global BarWidth as a state default for bar instances that
+        # don't already have one. Lets the "Bar width" slider still affect bars
+        # when the user hasn't tweaked them individually.
         if ($BarWidth -gt 0 -and $BarWidth -ne 24) {
-            foreach ($bn in @('core-ctx','core-rate-5h','core-rate-wk')) {
-                if (-not ($effectiveLayout.PSObject.Properties.Name -contains $bn)) {
-                    $effectiveLayout | Add-Member -NotePropertyName $bn -NotePropertyValue ([PSCustomObject]@{ barWidth = $BarWidth }) -Force
+            foreach ($inst in $instanceList) {
+                if (@('core-ctx','core-rate-5h','core-rate-wk') -contains [string]$inst.name) {
+                    if (-not $inst.PSObject.Properties['barWidth']) {
+                        $inst | Add-Member -NotePropertyName 'barWidth' -NotePropertyValue $BarWidth -Force
+                    }
                 }
             }
         }
 
-        if ($effectiveLayout.PSObject.Properties.Count -gt 0) {
-            $env:CS_LAYOUT_OVERRIDE = ($effectiveLayout | ConvertTo-Json -Depth 5 -Compress)
+        if ($instanceList.Count -gt 0) {
+            # Force array form regardless of length (PS 5.1's ConvertTo-Json
+            # unrolls single-element arrays). Manually wrap with brackets so
+            # the bundled script sees [{...}] for 1 instance too.
+            $itemJsons = @($instanceList | ForEach-Object { $_ | ConvertTo-Json -Depth 5 -Compress })
+            $env:CS_LAYOUT_OVERRIDE = '[' + ($itemJsons -join ',') + ']'
         } else {
             $env:CS_LAYOUT_OVERRIDE = $null
         }
@@ -355,15 +362,14 @@ while (-not $shouldStop) {
             '^POST /api/preview$' {
                 $bodyText = Read-RequestBody -Request $req
                 $body = $bodyText | ConvertFrom-Json
-                $widgets = if ($body.widgets) { @($body.widgets) } else { @() }
+                $instances = if ($body.instances) { @($body.instances) } else { @() }
                 $html = Render-Preview `
                     -Variant        ([string]$body.variant) `
-                    -Widgets        $widgets `
+                    -Instances      $instances `
                     -Palette        ([string]$body.palette) `
                     -BarWidth       ([int]($body.barWidth)) `
                     -Lines          ([string]$body.lines) `
-                    -CustomPalette  $body.customPalette `
-                    -Layout         $body.layout
+                    -CustomPalette  $body.customPalette
                 $payload = @{ html = $html } | ConvertTo-Json -Depth 4 -Compress
                 Send-StringResponse -Response $res -Body $payload -ContentType 'application/json; charset=utf-8'
             }
