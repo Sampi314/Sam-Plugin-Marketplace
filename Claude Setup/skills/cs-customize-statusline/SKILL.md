@@ -24,7 +24,7 @@ Also invoke when the user has installed `cs-statusline-setup` and wants to switc
 
 Three components in this skill folder:
 
-1. **`mock-data.json`** — synthetic statusline JSON exercising rate_limits, PR badge, thinking indicator, exceeds-200k, repo info, session_name, costs, durations
+1. **`mock-data.json`** — synthetic statusline JSON exercising rate_limits, PR badge, thinking indicator, context_window size, repo info, session_name, costs, durations
 2. **`scripts/preview.ps1`** — runs the bundled `statusline-extended.ps1` (or Classic) inside a temp sandbox with only the user's chosen widgets, pipes `mock-data.json` to it, prints the coloured output to the user's terminal between two banner lines
 3. **`scripts/apply.ps1`** — when the user confirms, copies the chosen widgets + lib + entry script to `~/.claude/` and patches `settings.json`
 

@@ -116,7 +116,7 @@ function Get-WidgetDescription([string]$name) {
         'thinking'                   { 'Brain icon when extended thinking is on' }
         'output-style'               { 'Current output-style name when non-default' }
         'session-fingerprint'        { 'Stable emoji that uniquely identifies this session' }
-        'core-ctx'                   { 'Context-window fill bar with exceeds-200k warning' }
+        'core-ctx'                   { 'Context-window fill bar; colour escalates against the real window size' }
         'core-rate-5h'               { '5-hour Anthropic rate-limit bar (built-in or OAuth fallback)' }
         'core-rate-wk'               { 'Weekly Anthropic rate-limit bar' }
         'core-work'                  { 'Session duration + lines added/removed + active/idle ratio' }

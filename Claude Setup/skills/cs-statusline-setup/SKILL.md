@@ -185,7 +185,7 @@ The Extended variant turns the statusline into a widget host. Each widget is a s
 | `020-thinking.ps1` | 🧠 indicator when `thinking.enabled` |
 | `030-output-style.ps1` | Output style name when non-default |
 | `040-session-fingerprint.ps1` | Stable emoji per session — distinguishes parallel sessions |
-| `050-core-ctx.ps1` | CTX bar with exceeds-200k warning, shows context-window size |
+| `050-core-ctx.ps1` | CTX fill bar; colour escalates against the real context-window size |
 | `060-core-rate-5h.ps1` | 5-hour rate-limit bar (built-in `rate_limits` or OAuth fallback) |
 | `070-core-rate-wk.ps1` | Weekly rate-limit bar |
 | `080-core-work.ps1` | Session duration + diff + active/idle ratio |
