@@ -133,6 +133,7 @@ function Get-WidgetDescription([string]$name) {
         'cwd'                        { 'Current working directory with smart truncation' }
         'token-breakdown'            { 'Current-tick input / output / cache tokens explicit' }
         'spacer'                     { 'User-customisable text widget (dividers, mottos, badges)' }
+        'session-time'               { 'Total active time across sessions (today / week / all)' }
         default                      { '' }
     }
 }
@@ -349,9 +350,97 @@ while (-not $shouldStop) {
             '^GET /$' {
                 Send-FileResponse -Response $res -Path (Join-Path $WwwDir 'index.html')
             }
-            '^GET /(styles\.css|app\.js)$' {
+            '^GET /(styles\.css|app\.js|dashboard\.js)$' {
                 $file = $req.Url.AbsolutePath.TrimStart('/')
                 Send-FileResponse -Response $res -Path (Join-Path $WwwDir $file)
+            }
+            '^GET /dashboard$' {
+                Send-FileResponse -Response $res -Path (Join-Path $WwwDir 'dashboard.html')
+            }
+            '^POST /api/events$' {
+                $bodyText = Read-RequestBody -Request $req
+                $body = if ($bodyText) { $bodyText | ConvertFrom-Json } else { @{} }
+                $window = if ($body.window) { [string]$body.window } else { 'week' }
+
+                $eventsFile = Join-Path $env:USERPROFILE '.claude\events.ndjson'
+                if (-not (Test-Path $eventsFile)) {
+                    Send-StringResponse -Response $res -Body ('{"events":[],"summary":{"available":false}}') -ContentType 'application/json; charset=utf-8'
+                    break
+                }
+                $now = Get-Date
+                $cutoff = switch ($window) {
+                    'today' { $now.Date }
+                    'all'   { $now.AddDays(-30) }
+                    default { $now.AddDays(-7) }
+                }
+                $events = @()
+                $sessions = @{}
+                $totalCost = 0.0
+                $peakCostPerMin = 0.0
+                try {
+                    $lines = Get-Content $eventsFile -Tail 200000 -ErrorAction Stop
+                } catch {
+                    $lines = @()
+                }
+                foreach ($line in $lines) {
+                    if ([string]::IsNullOrWhiteSpace($line)) { continue }
+                    try {
+                        $e = $line | ConvertFrom-Json -ErrorAction Stop
+                        if (-not $e.ts) { continue }
+                        $ts = [DateTimeOffset]::Parse($e.ts).LocalDateTime
+                        if ($ts -lt $cutoff) { continue }
+                        # tick events have ctx_pct + cost_per_min; we only chart those
+                        if ($e.type -eq 'tick' -and $e.session_id) {
+                            $events += [PSCustomObject]@{
+                                ts          = $ts.ToString('o')
+                                sessionId   = [string]$e.session_id
+                                ctxPct      = if ($null -ne $e.ctx_pct) { [double]$e.ctx_pct } else { 0 }
+                                costPerMin  = if ($null -ne $e.cost_per_min) { [double]$e.cost_per_min } else { 0 }
+                            }
+                            $sid = [string]$e.session_id
+                            if (-not $sessions.ContainsKey($sid)) {
+                                $sessions[$sid] = [PSCustomObject]@{
+                                    id = $sid; start = $ts; end = $ts; ticks = 1; peakCtx = $e.ctx_pct; lastCost = $e.cost_per_min
+                                }
+                            } else {
+                                if ($ts -lt $sessions[$sid].start) { $sessions[$sid].start = $ts }
+                                if ($ts -gt $sessions[$sid].end)   { $sessions[$sid].end   = $ts }
+                                $sessions[$sid].ticks++
+                                if ($e.ctx_pct -gt $sessions[$sid].peakCtx) { $sessions[$sid].peakCtx = $e.ctx_pct }
+                                $sessions[$sid].lastCost = $e.cost_per_min
+                            }
+                            if ($e.cost_per_min -gt $peakCostPerMin) { $peakCostPerMin = $e.cost_per_min }
+                        }
+                    } catch {}
+                }
+                $totalSecs = 0.0
+                $sessionList = @()
+                foreach ($sid in $sessions.Keys) {
+                    $s = $sessions[$sid]
+                    $dur = ($s.end - $s.start).TotalSeconds
+                    $totalSecs += $dur
+                    $sessionList += [PSCustomObject]@{
+                        id        = $s.id
+                        start     = $s.start.ToString('o')
+                        end       = $s.end.ToString('o')
+                        durationS = [int]$dur
+                        ticks     = $s.ticks
+                        peakCtx   = [double]$s.peakCtx
+                    }
+                }
+                $payload = @{
+                    summary = @{
+                        available      = $true
+                        window         = $window
+                        eventCount     = $events.Count
+                        sessionCount   = $sessions.Count
+                        totalActiveSec = [int]$totalSecs
+                        peakCostPerMin = $peakCostPerMin
+                    }
+                    events    = $events
+                    sessions  = ($sessionList | Sort-Object start -Descending)
+                } | ConvertTo-Json -Depth 6 -Compress
+                Send-StringResponse -Response $res -Body $payload -ContentType 'application/json; charset=utf-8'
             }
             '^GET /api/manifest$' {
                 $manifest = @{

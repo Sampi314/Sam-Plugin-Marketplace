@@ -69,6 +69,7 @@ const PRIMARY_ROLE_BY_WIDGET = {
     'date':                    'C_TIME',
     'cwd':                     'C_SKILL',
     'token-breakdown':         'C_TIME',
+    'session-time':            'C_TIME',
     'skill-audit-general':     'C_SKILL',
     'skill-financial-modelling':'C_SKILL',
     'skill-writing-tools':     'C_SKILL',
@@ -105,7 +106,7 @@ const WIDGET_GROUPS = [
     { title: 'Rate limits',          names: ['core-rate-5h', 'core-rate-wk'] },
     { title: 'Sparklines & signals', names: ['sparkline-cost', 'sparkline-ctx', 'thinking', 'output-style', 'session-fingerprint'] },
     { title: 'Git & PRs',            names: ['git-status', 'pr-badge'] },
-    { title: 'Clock & path',         names: ['clock', 'date', 'cwd', 'token-breakdown'] },
+    { title: 'Clock & path',         names: ['clock', 'date', 'cwd', 'token-breakdown', 'session-time'] },
     { title: 'Custom text',          names: ['spacer'] },
     { title: 'Skill overlays',       names: ['skill-audit-general', 'skill-financial-modelling', 'skill-writing-tools'] },
 ];

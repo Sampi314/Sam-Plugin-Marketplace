@@ -1202,6 +1202,154 @@ input[type=number]:focus {
 .radio-list label:hover { background: var(--bg-card); color: var(--text-primary); }
 .radio-list input { accent-color: var(--accent); }
 
+/* === Dashboard ========================================================== */
+
+.nav-pages {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex: 1;
+    justify-content: center;
+}
+.nav-pages a {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    color: var(--nav-text);
+    opacity: 0.6;
+    position: relative;
+    padding: 4px 0;
+    transition: opacity 0.2s;
+}
+.nav-pages a:hover { opacity: 1; }
+.nav-pages a.active {
+    opacity: 1;
+    color: var(--nav-text);
+}
+.nav-pages a.active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px; left: 0; right: 0;
+    height: 1.5px;
+    background: var(--accent);
+}
+
+@media (max-width: 600px) {
+    .nav-pages { display: none; }
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+}
+
+.stat-card {
+    background: var(--bg-card-alt);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.25s;
+}
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 2px; height: 0;
+    background: var(--accent);
+    transition: height 0.35s ease;
+}
+.stat-card:hover {
+    border-color: var(--accent);
+}
+.stat-card:hover::before { height: 100%; }
+
+.stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.66rem;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.stat-value {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+}
+
+.chart-frame {
+    background: var(--bg-card-alt);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 16px 18px;
+}
+
+.sessions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.session-row {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    gap: 14px;
+    align-items: center;
+    background: var(--bg-card-alt);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 10px 14px;
+    transition: border-color 0.18s;
+}
+.session-row:hover { border-color: var(--border-strong); }
+
+.session-when strong {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--text-primary);
+    display: block;
+    margin-bottom: 2px;
+}
+.session-when .meta {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.session-dur,
+.session-ctx {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--text-primary);
+}
+.session-ctx { color: var(--accent); }
+
+.session-id {
+    text-align: right;
+}
+
+@media (max-width: 700px) {
+    .session-row { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .session-id { display: none; }
+}
+
+.empty {
+    text-align: center;
+    padding: 36px 12px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+}
+
 /* === Footer ============================================================= */
 
 footer {

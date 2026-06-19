@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000000" />
+    <title>Statusline Dashboard — Sam Ngo</title>
+    <meta name="description" content="Cost, context, and session activity charts sourced from ~/.claude/events.ndjson." />
+    <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<nav class="navbar" aria-label="App navigation">
+    <div class="nav-inner">
+        <a class="nav-brand" href="/">
+            <span class="brand-mark" aria-hidden="true">吳</span>
+            <span>Statusline</span>
+        </a>
+        <ul class="nav-links nav-pages">
+            <li><a href="/">Customizer</a></li>
+            <li><a href="/dashboard" class="active">Dashboard</a></li>
+        </ul>
+        <div class="nav-tools">
+            <span id="status-pill" class="status-pill" aria-live="polite">loading</span>
+            <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">&#9790;</button>
+        </div>
+    </div>
+</nav>
+
+<header class="hero" id="hero">
+    <canvas id="hero-particles" class="hero-canvas" aria-hidden="true"></canvas>
+    <div class="hero-inner hero-inner-text">
+        <div class="hero-label hero-reveal">Dashboard</div>
+        <h1 class="hero-reveal">Read your <em>activity</em></h1>
+        <p class="headline hero-reveal">Cost, context, and session times sourced from ~/.claude/events.ndjson — the same per-tick log your statusline writes.</p>
+        <div class="hero-actions hero-reveal" id="window-picker">
+            <button class="btn btn-outline" data-window="today">Today</button>
+            <button class="btn btn-primary" data-window="week">7 days</button>
+            <button class="btn btn-outline" data-window="all">30 days</button>
+        </div>
+        <div class="hero-meta hero-reveal">
+            <span>v1.9.0</span>
+            <span>read-only</span>
+            <span>local file</span>
+        </div>
+    </div>
+</header>
+
+<main class="main-stack">
+
+    <section class="fade-in" id="summary-section">
+        <h2>Summary</h2>
+        <p class="section-hint">Aggregates over the selected window. Total active time is computed by grouping events by session id and summing each session's span.</p>
+        <div id="summary-grid" class="summary-grid">
+            <div class="stat-card"><div class="stat-label">Sessions</div><div class="stat-value" id="stat-sessions">—</div></div>
+            <div class="stat-card"><div class="stat-label">Active time</div><div class="stat-value" id="stat-active">—</div></div>
+            <div class="stat-card"><div class="stat-label">Peak burn</div><div class="stat-value" id="stat-peak">—</div></div>
+            <div class="stat-card"><div class="stat-label">Events</div><div class="stat-value" id="stat-events">—</div></div>
+        </div>
+    </section>
+
+    <section class="fade-in" id="cost-section">
+        <h2>Cost burn over time</h2>
+        <p class="section-hint">Cost-per-minute series. Each point is one statusline tick (~30s apart). Spikes show heavy generation; flat lows show idle.</p>
+        <div class="chart-frame"><canvas id="cost-chart" height="220"></canvas></div>
+    </section>
+
+    <section class="fade-in" id="ctx-section">
+        <h2>Context fill over time</h2>
+        <p class="section-hint">Used context percentage per tick. Watch for sustained high values — that's when auto-compaction is approaching.</p>
+        <div class="chart-frame"><canvas id="ctx-chart" height="220"></canvas></div>
+    </section>
+
+    <section class="fade-in" id="sessions-section">
+        <h2>Sessions</h2>
+        <p class="section-hint">Each row is a single Claude Code session within the window. Start / end derived from the first and last tick we recorded.</p>
+        <div class="sessions-list" id="sessions-list"></div>
+    </section>
+
+</main>
+
+<footer>
+    <div class="footer-mark" aria-hidden="true">吳</div>
+    <div class="footer-tagline">Loopback · 127.0.0.1 · read from ~/.claude/events.ndjson</div>
+    <div>&copy; 2026 Sam Ngo — statusline dashboard</div>
+</footer>
+
+<script src="/dashboard.js"></script>
+</body>
+</html>
