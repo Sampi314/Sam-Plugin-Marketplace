@@ -155,64 +155,91 @@ function Get-PaletteManifest {
     return $palettes
 }
 
+# Cache the mock JSON once at server startup — re-reading on every preview is wasteful.
+$script:CachedMockJson = Get-Content $MockDataPath -Raw -Encoding UTF8
+
+# Probe for pwsh (PowerShell 7+) at startup. It's noticeably faster than
+# powershell.exe (Windows PowerShell 5.1) for our workload, so prefer it.
+$script:PsExecutable = $null
+try {
+    $pwshCmd = Get-Command 'pwsh' -ErrorAction Stop
+    if ($pwshCmd) { $script:PsExecutable = $pwshCmd.Source }
+} catch {
+    $script:PsExecutable = 'powershell'
+}
+
 function Render-Preview {
     param(
         [string]$Variant,
         [string[]]$Widgets,
         [string]$Palette,
         [int]$BarWidth,
-        [string]$Lines
+        [string]$Lines,
+        [object]$CustomPalette = $null,   # PSCustomObject: role -> "R G B"
+        [object]$Layout       = $null     # PSCustomObject: widgetName -> {line,position,priority,barWidth}
     )
 
     if ($Variant -eq 'Classic') {
-        # Classic preview is hard to sandbox (regex-rewriting of the monolithic
-        # script). We surface a placeholder rather than the wrong-coloured output.
         return '<pre class="statusline classic-notice">' +
                'Live preview for the Classic variant is not implemented yet. ' +
                'Apply will still work — the installer customises the script directly.' +
                '</pre>'
     }
 
-    $sandbox  = Join-Path $env:TEMP "cs-webprev-$([guid]::NewGuid().ToString('N').Substring(0,10))"
-    $sbClaude = Join-Path $sandbox '.claude'
-    $sbLib    = Join-Path $sbClaude 'lib'
-    $sbWidget = Join-Path $sbClaude 'statusline-widgets'
-    New-Item -ItemType Directory -Path $sbLib -Force | Out-Null
-    New-Item -ItemType Directory -Path $sbWidget -Force | Out-Null
-
-    Copy-Item (Join-Path $BundledLib '*.ps1') $sbLib -Force
-    Copy-Item $BundledExtended (Join-Path $sbClaude 'statusline-extended.ps1') -Force
-
-    $allowList = @($Widgets | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-    if ($allowList.Count -gt 0) { $allowList += 'mode-aware' }   # layout host is essential
-
-    foreach ($w in (Get-ChildItem $BundledWidgets -Filter '*.ps1')) {
-        try {
-            $m = & $w.FullName
-            if (-not $m -or -not $m.Name) { continue }
-            if ($allowList.Count -eq 0 -or ($allowList -contains $m.Name)) {
-                Copy-Item $w.FullName $sbWidget -Force
-            }
-        } catch {}
+    # Snapshot env so we restore cleanly even on error
+    $prev = @{
+        CS_BUNDLE_ROOT          = $env:CS_BUNDLE_ROOT
+        CS_WIDGETS_ALLOW        = $env:CS_WIDGETS_ALLOW
+        CS_PALETTE_OVERRIDE     = $env:CS_PALETTE_OVERRIDE
+        CS_PALETTE_CUSTOM_JSON  = $env:CS_PALETTE_CUSTOM_JSON
+        CS_LAYOUT_OVERRIDE      = $env:CS_LAYOUT_OVERRIDE
+        CS_PREVIEW_MODE         = $env:CS_PREVIEW_MODE
     }
 
-    $mockJson = Get-Content $MockDataPath -Raw -Encoding UTF8
-
-    $prevUP = $env:USERPROFILE
-    $prevPal = $env:CS_PALETTE_OVERRIDE
     try {
-        $env:USERPROFILE = $sandbox
+        $env:CS_BUNDLE_ROOT      = $SetupRoot
         $env:CS_PALETTE_OVERRIDE = $Palette
-        $entry = Join-Path $sbClaude 'statusline-extended.ps1'
-        $stdout = $mockJson | & powershell -NoProfile -ExecutionPolicy Bypass -File $entry 2>&1
+        $env:CS_PREVIEW_MODE     = '1'
+
+        # Widget allowlist
+        $allow = @($Widgets | ForEach-Object { ([string]$_).Trim() } | Where-Object { $_ })
+        $env:CS_WIDGETS_ALLOW = if ($allow.Count -gt 0) { $allow -join ',' } else { $null }
+
+        # Per-bar widths fold into Layout overrides so we don't need yet another env var.
+        # Caller's $Layout is authoritative; we add a default barWidth for the three bar
+        # widgets if Layout has no entry for them.
+        $effectiveLayout = if ($Layout) { $Layout } else { [PSCustomObject]@{} }
+        if ($BarWidth -gt 0 -and $BarWidth -ne 24) {
+            foreach ($bn in @('core-ctx','core-rate-5h','core-rate-wk')) {
+                if (-not ($effectiveLayout.PSObject.Properties.Name -contains $bn)) {
+                    $effectiveLayout | Add-Member -NotePropertyName $bn -NotePropertyValue ([PSCustomObject]@{ barWidth = $BarWidth }) -Force
+                }
+            }
+        }
+
+        if ($effectiveLayout.PSObject.Properties.Count -gt 0) {
+            $env:CS_LAYOUT_OVERRIDE = ($effectiveLayout | ConvertTo-Json -Depth 5 -Compress)
+        } else {
+            $env:CS_LAYOUT_OVERRIDE = $null
+        }
+
+        if ($CustomPalette) {
+            $env:CS_PALETTE_CUSTOM_JSON = ($CustomPalette | ConvertTo-Json -Depth 4 -Compress)
+        } else {
+            $env:CS_PALETTE_CUSTOM_JSON = $null
+        }
+
+        # Direct invocation — no sandbox, no copies. Mock JSON piped on stdin.
+        # pwsh (7+) renders the statusline ~2x faster than powershell (5.1) for this
+        # workload, so prefer it when available; fall back to powershell otherwise.
+        $ps = if ($script:PsExecutable) { $script:PsExecutable } else { 'powershell' }
+        $stdout = $script:CachedMockJson | & $ps -NoProfile -ExecutionPolicy Bypass -File $BundledExtended 2>&1
         $raw = ($stdout | Out-String).TrimEnd("`r","`n")
         return ConvertFrom-AnsiToHtml -Text $raw
     } catch {
         return '<pre class="statusline error">Preview error: ' + ([string]$_).Replace('<','&lt;').Replace('>','&gt;') + '</pre>'
     } finally {
-        $env:USERPROFILE = $prevUP
-        $env:CS_PALETTE_OVERRIDE = $prevPal
-        Remove-Item -Path $sandbox -Recurse -Force -ErrorAction SilentlyContinue
+        foreach ($k in $prev.Keys) { Set-Item "env:$k" $prev[$k] -ErrorAction SilentlyContinue }
     }
 }
 
@@ -325,11 +352,13 @@ while (-not $shouldStop) {
                 $body = $bodyText | ConvertFrom-Json
                 $widgets = if ($body.widgets) { @($body.widgets) } else { @() }
                 $html = Render-Preview `
-                    -Variant   ([string]$body.variant) `
-                    -Widgets   $widgets `
-                    -Palette   ([string]$body.palette) `
-                    -BarWidth  ([int]($body.barWidth)) `
-                    -Lines     ([string]$body.lines)
+                    -Variant        ([string]$body.variant) `
+                    -Widgets        $widgets `
+                    -Palette        ([string]$body.palette) `
+                    -BarWidth       ([int]($body.barWidth)) `
+                    -Lines          ([string]$body.lines) `
+                    -CustomPalette  $body.customPalette `
+                    -Layout         $body.layout
                 $payload = @{ html = $html } | ConvertTo-Json -Depth 4 -Compress
                 Send-StringResponse -Response $res -Body $payload -ContentType 'application/json; charset=utf-8'
             }

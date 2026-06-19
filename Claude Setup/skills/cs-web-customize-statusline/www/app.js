@@ -2,73 +2,69 @@
 // app.js — Statusline Customizer SPA
 // ============================================================================
 //
-// State flow:
-//   1. fetch /api/manifest             -> widgets, palettes, line opts
-//   2. render UI                       -> palette grid, widget toggles, sliders
-//   3. user change -> debounce 200ms   -> POST /api/preview
-//   4. preview HTML rendered into #preview-area
-//   5. Apply  -> POST /api/apply       -> show result, then /api/shutdown
-//   6. Cancel -> POST /api/shutdown
+// State:
+//   state.variant       'Extended' | 'Classic'
+//   state.palette       base palette name
+//   state.customPalette {C_MODEL:'R G B', ...}  individual role overrides
+//   state.widgets       Set<string> of enabled widget names
+//   state.layout        {name: {line, position, priority, barWidth?}}  per-widget overrides
+//   state.barWidth      Classic-variant single bar width
+//   state.lines         Classic-variant line selector
+//
+// Persistence:
+//   localStorage 'cs-web-customizer-v1' stores state.customPalette + state.layout + state.palette
+//   so the user's tweaks survive a refresh.
 // ============================================================================
+
+const STORE_KEY = 'cs-web-customizer-v1';
+
+// Roles shown in the custom-palette editor (the ones the override env vars accept)
+const PALETTE_ROLES = [
+    { key: 'C_MODEL',   label: 'model'   },
+    { key: 'C_SKILL',   label: 'skill'   },
+    { key: 'C_COST',    label: 'cost'    },
+    { key: 'C_PROJCST', label: 'project' },
+    { key: 'C_ADD',     label: 'added'   },
+    { key: 'C_DEL',     label: 'removed' },
+    { key: 'C_TIME',    label: 'time'    },
+    { key: 'C_COUNT',   label: 'count'   },
+    { key: 'C_CYAN',    label: 'cyan'    },
+    { key: 'C_GOLD',    label: 'gold'    },
+];
+
+const BAR_WIDGETS = new Set(['core-ctx', 'core-rate-5h', 'core-rate-wk']);
 
 const state = {
     variant: 'Extended',
     palette: 'Sam',
-    widgets: new Set(),       // populated after manifest loads
+    customPalette: {},         // role -> "R G B"
+    widgets: new Set(),
+    layout: {},                // name -> {line, position, priority, barWidth?}
     barWidth: 30,
     lines: 'all',
 };
 
 let manifest = null;
 let previewTimer = null;
+let dragInfo = null;           // {widgetName, sourceSlot}
 
 // ----------------------------------------------------------------------------
-// Widget grouping — drives the order and labelling of widget toggles in the UI.
-// The host always adds 'mode-aware' implicitly, so it's not surfaced here.
-// Reorder / regroup freely; widgets not listed here fall through to "Other".
+// Widget grouping in the toggle list
 // ----------------------------------------------------------------------------
 const WIDGET_GROUPS = [
-    {
-        title: 'Core info',
-        names: ['core-header', 'core-ctx', 'core-work'],
-    },
-    {
-        title: 'Rate limits',
-        names: ['core-rate-5h', 'core-rate-wk'],
-    },
-    {
-        title: 'Sparklines & signals',
-        names: ['sparkline-cost', 'sparkline-ctx', 'thinking', 'output-style', 'session-fingerprint'],
-    },
-    {
-        title: 'Git & PRs',
-        names: ['git-status', 'pr-badge'],
-    },
-    {
-        title: 'Skill overlays',
-        names: ['skill-audit-general', 'skill-financial-modelling', 'skill-writing-tools'],
-    },
+    { title: 'Core info',            names: ['core-header', 'core-ctx', 'core-work'] },
+    { title: 'Rate limits',          names: ['core-rate-5h', 'core-rate-wk'] },
+    { title: 'Sparklines & signals', names: ['sparkline-cost', 'sparkline-ctx', 'thinking', 'output-style', 'session-fingerprint'] },
+    { title: 'Git & PRs',            names: ['git-status', 'pr-badge'] },
+    { title: 'Skill overlays',       names: ['skill-audit-general', 'skill-financial-modelling', 'skill-writing-tools'] },
 ];
 
-// ----------------------------------------------------------------------------
-// pickSwatchColors(palette)
-//   Decide which colour roles from a palette to surface as the 4-chip strip
-//   shown on each palette card. A palette has 10 named roles; this picks the
-//   subset that best communicates the palette's character at a glance.
-//
-//   TODO[design-decision]: tweak the role list below — it shapes how the
-//   palette picker reads. Possible variants:
-//     • Identity-first:  model, skill, cost, project   (shows headline colours)
-//     • State-first:     added, removed, time, gold     (shows status colours)
-//     • Mixed (current): model, cost, added, removed   (mixes both)
-//   Returns the role keys in left-to-right order on the swatch strip.
-// ----------------------------------------------------------------------------
 function pickSwatchColors(palette) {
-    return ['model', 'cost', 'added', 'removed'].map(key => palette.colors[key]);
+    return ['model', 'cost', 'added', 'removed'].map(k => palette.colors[k]);
 }
 
 // ----------------------------------------------------------------------------
-// Init
+// Boot
 // ----------------------------------------------------------------------------
 async function init() {
     setStatus('loading manifest', 'busy');
@@ -81,13 +77,23 @@ async function init() {
         return;
     }
 
-    // Default: all widgets selected (so the user starts from the full statusline)
+    // Default: all widgets enabled in their manifest-default positions
     for (const w of manifest.widgets) {
         if (w.name !== 'mode-aware') state.widgets.add(w.name);
+        // Seed layout from manifest defaults so the board has a starting state
+        state.layout[w.name] = {
+            line: w.line || 1,
+            position: w.position || 'left',
+            priority: w.priority ?? 100,
+        };
     }
+
+    loadPersisted();      // overlay any saved customisations
 
     renderVariants();
     renderPalettes();
+    renderCustomPaletteEditor();
+    renderLayout();
     renderWidgets();
     renderLines();
     renderBarWidth();
@@ -97,7 +103,39 @@ async function init() {
 }
 
 // ----------------------------------------------------------------------------
-// Render helpers
+// Persistence
+// ----------------------------------------------------------------------------
+function persist() {
+    try {
+        localStorage.setItem(STORE_KEY, JSON.stringify({
+            palette: state.palette,
+            customPalette: state.customPalette,
+            layout: state.layout,
+            widgets: Array.from(state.widgets),
+            variant: state.variant,
+            barWidth: state.barWidth,
+            lines: state.lines,
+        }));
+    } catch {}
+}
+
+function loadPersisted() {
+    try {
+        const raw = localStorage.getItem(STORE_KEY);
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        if (saved.variant)       state.variant       = saved.variant;
+        if (saved.palette)       state.palette       = saved.palette;
+        if (saved.customPalette) state.customPalette = saved.customPalette;
+        if (saved.layout)        Object.assign(state.layout, saved.layout);   // merge, don't replace
+        if (saved.widgets)       state.widgets       = new Set(saved.widgets);
+        if (saved.barWidth)      state.barWidth      = saved.barWidth;
+        if (saved.lines)         state.lines         = saved.lines;
+    } catch {}
+}
+
+// ----------------------------------------------------------------------------
+// Renderers
 // ----------------------------------------------------------------------------
 function renderVariants() {
     const root = document.getElementById('variant-picker');
@@ -117,6 +155,7 @@ function renderVariants() {
             state.variant = e.target.value;
             document.querySelectorAll('#variant-picker label').forEach(l => l.classList.remove('selected'));
             label.classList.add('selected');
+            persist();
             schedulePreview();
         });
         root.appendChild(label);
@@ -130,35 +169,225 @@ function renderPalettes() {
         const card = document.createElement('div');
         card.className = 'palette-card' + (state.palette === p.name ? ' selected' : '');
         const swatchColors = pickSwatchColors(p);
-        const swatchHtml = swatchColors.map(c => `<span style="background:${c}"></span>`).join('');
         card.innerHTML = `
             <div class="palette-name">${p.name}</div>
-            <div class="palette-swatch">${swatchHtml}</div>
+            <div class="palette-swatch">${swatchColors.map(c => `<span style="background:${c}"></span>`).join('')}</div>
         `;
         card.addEventListener('click', () => {
             state.palette = p.name;
+            // Switching base palette clears custom overrides — they were tied to the previous base
+            state.customPalette = {};
             document.querySelectorAll('.palette-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
+            renderCustomPaletteEditor();
+            updatePaletteModPill();
+            persist();
             schedulePreview();
         });
         root.appendChild(card);
     }
 }
 
+function getBasePalette() {
+    return manifest.palettes.find(p => p.name === state.palette) || manifest.palettes[0];
+}
+
+// Map role key (C_MODEL) -> the SPA-side colour name (model) used in palette manifest
+function roleKeyToSpaKey(roleKey) {
+    return {
+        C_MODEL: 'model', C_SKILL: 'skill', C_COST: 'cost', C_PROJCST: 'project',
+        C_ADD: 'added', C_DEL: 'removed', C_TIME: 'time', C_COUNT: 'count',
+        C_CYAN: 'cyan', C_GOLD: 'gold',
+    }[roleKey];
+}
+
+function effectiveRoleHex(roleKey) {
+    if (state.customPalette[roleKey]) {
+        return rgbTripleToHex(state.customPalette[roleKey]);
+    }
+    const base = getBasePalette();
+    return base.colors[roleKeyToSpaKey(roleKey)] || '#ffffff';
+}
+
+function rgbTripleToHex(triple) {
+    const parts = String(triple).trim().split(/\s+/).map(n => parseInt(n, 10));
+    return '#' + parts.slice(0, 3).map(n => Math.max(0, Math.min(255, n)).toString(16).padStart(2, '0')).join('');
+}
+
+function hexToRgbTriple(hex) {
+    const m = String(hex).match(/^#?([0-9a-f]{6})$/i);
+    if (!m) return '255 255 255';
+    const n = parseInt(m[1], 16);
+    return `${(n >> 16) & 0xff} ${(n >> 8) & 0xff} ${n & 0xff}`;
+}
+
+function renderCustomPaletteEditor() {
+    const root = document.getElementById('palette-editor');
+    root.innerHTML = '';
+    for (const role of PALETTE_ROLES) {
+        const row = document.createElement('div');
+        row.className = 'palette-role-row';
+        const id = 'color-' + role.key;
+        row.innerHTML = `
+            <input type="color" id="${id}" value="${effectiveRoleHex(role.key)}" />
+            <label for="${id}">${role.label}</label>
+        `;
+        row.querySelector('input').addEventListener('input', (e) => {
+            state.customPalette[role.key] = hexToRgbTriple(e.target.value);
+            updatePaletteModPill();
+            persist();
+            schedulePreview();
+        });
+        root.appendChild(row);
+    }
+    updatePaletteModPill();
+}
+
+function updatePaletteModPill() {
+    const pill = document.getElementById('palette-mod-pill');
+    pill.style.display = Object.keys(state.customPalette).length > 0 ? '' : 'none';
+}
+
+// ----------------------------------------------------------------------------
+// Layout board with drag-drop
+// ----------------------------------------------------------------------------
+function renderLayout() {
+    const board = document.getElementById('layout-board');
+    board.innerHTML = '';
+
+    // Bucket enabled widgets by line + position
+    const buckets = {};   // 'L{n}-{pos}' -> [{name, ...}]
+    for (const name of state.widgets) {
+        const w = manifest.widgets.find(m => m.name === name);
+        if (!w) continue;
+        const ov = state.layout[name] || {};
+        const line = ov.line ?? w.line ?? 1;
+        const position = ov.position ?? w.position ?? 'left';
+        const priority = ov.priority ?? w.priority ?? 100;
+        const key = `L${line}-${position}`;
+        (buckets[key] = buckets[key] || []).push({ name, line, position, priority });
+    }
+    // Sort each bucket by priority
+    for (const key of Object.keys(buckets)) {
+        buckets[key].sort((a, b) => a.priority - b.priority);
+    }
+
+    // Draw rows for lines 1..5
+    for (let line = 1; line <= 5; line++) {
+        const row = document.createElement('div');
+        row.className = 'layout-line-row';
+        row.innerHTML = `<div class="layout-line-label">L${line}</div>`;
+        row.appendChild(makeSlot(line, 'left',  buckets[`L${line}-left`]  || []));
+        row.appendChild(makeSlot(line, 'right', buckets[`L${line}-right`] || []));
+        board.appendChild(row);
+    }
+}
+
+function makeSlot(line, position, items) {
+    const slot = document.createElement('div');
+    slot.className = 'layout-slot' + (items.length === 0 ? ' empty' : '');
+    slot.dataset.line = line;
+    slot.dataset.position = position;
+    slot.dataset.emptyLabel = `L${line} · ${position}`;
+
+    for (const item of items) {
+        slot.appendChild(makeChip(item.name));
+    }
+
+    slot.addEventListener('dragover', (e) => {
+        if (!dragInfo) return;
+        e.preventDefault();
+        slot.classList.add('dragover-active');
+    });
+    slot.addEventListener('dragleave', () => {
+        slot.classList.remove('dragover-active');
+    });
+    slot.addEventListener('drop', (e) => {
+        e.preventDefault();
+        slot.classList.remove('dragover-active');
+        if (!dragInfo) return;
+        const name = dragInfo.widgetName;
+        if (!name) return;
+        const ov = state.layout[name] || {};
+        ov.line = line;
+        ov.position = position;
+        // Drop at end -> priority = max+10 within new slot, so it sits last
+        const others = Array.from(state.widgets)
+            .filter(n => n !== name && (state.layout[n]?.line === line) && (state.layout[n]?.position === position))
+            .map(n => state.layout[n].priority ?? 100);
+        ov.priority = (others.length ? Math.max(...others) : 0) + 10;
+        state.layout[name] = ov;
+        persist();
+        renderLayout();
+        schedulePreview();
+    });
+
+    return slot;
+}
+
+function makeChip(widgetName) {
+    const chip = document.createElement('div');
+    chip.className = 'layout-chip' + (BAR_WIDGETS.has(widgetName) ? ' bar-chip' : '');
+    chip.draggable = true;
+    chip.dataset.widget = widgetName;
+    const ov = state.layout[widgetName] || {};
+    const w = manifest.widgets.find(m => m.name === widgetName);
+    const barWidth = ov.barWidth ?? 24;
+
+    let chipHtml = `<span class="chip-drag-handle" aria-hidden="true">⋮⋮</span><span class="chip-name">${widgetName}</span>`;
+    if (BAR_WIDGETS.has(widgetName)) {
+        chipHtml += `<input type="range" class="chip-bar-slider" min="6" max="50" step="1" value="${barWidth}" title="Bar width" />`;
+        chipHtml += `<span class="chip-bar-val">${barWidth}</span>`;
+    }
+    chip.innerHTML = chipHtml;
+
+    chip.addEventListener('dragstart', (e) => {
+        dragInfo = { widgetName };
+        chip.classList.add('dragging');
+        // Some browsers require data to be set for the drag to fire
+        try { e.dataTransfer.setData('text/plain', widgetName); } catch {}
+        e.dataTransfer.effectAllowed = 'move';
+    });
+    chip.addEventListener('dragend', () => {
+        chip.classList.remove('dragging');
+        document.querySelectorAll('.layout-slot.dragover-active').forEach(s => s.classList.remove('dragover-active'));
+        dragInfo = null;
+    });
+
+    const slider = chip.querySelector('.chip-bar-slider');
+    if (slider) {
+        const valEl = chip.querySelector('.chip-bar-val');
+        slider.addEventListener('input', (e) => {
+            const v = parseInt(e.target.value, 10);
+            valEl.textContent = v;
+            const o = state.layout[widgetName] || {};
+            o.barWidth = v;
+            state.layout[widgetName] = o;
+            persist();
+            schedulePreview();
+        });
+        // Stop drag on the slider so the chip doesn't grab from the input
+        slider.addEventListener('mousedown', (e) => e.stopPropagation());
+        slider.addEventListener('pointerdown', (e) => e.stopPropagation());
+    }
+
+    return chip;
+}
+
+// ----------------------------------------------------------------------------
+// Widget toggles
+// ----------------------------------------------------------------------------
 function renderWidgets() {
     const root = document.getElementById('widget-groups');
     root.innerHTML = '';
     const allWidgets = manifest.widgets.filter(w => w.name !== 'mode-aware');
     const seen = new Set();
     for (const group of WIDGET_GROUPS) {
-        const groupWidgets = group.names
-            .map(n => allWidgets.find(w => w.name === n))
-            .filter(Boolean);
+        const groupWidgets = group.names.map(n => allWidgets.find(w => w.name === n)).filter(Boolean);
         if (!groupWidgets.length) continue;
         groupWidgets.forEach(w => seen.add(w.name));
         root.appendChild(renderWidgetGroup(group.title, groupWidgets));
     }
-    // Fall-through "Other" group for any widgets WIDGET_GROUPS missed
     const orphans = allWidgets.filter(w => !seen.has(w.name));
     if (orphans.length) root.appendChild(renderWidgetGroup('Other', orphans));
 }
@@ -186,6 +415,8 @@ function renderWidgetGroup(title, widgets) {
             if (e.target.checked) state.widgets.add(w.name);
             else state.widgets.delete(w.name);
             item.classList.toggle('selected', e.target.checked);
+            persist();
+            renderLayout();
             schedulePreview();
         });
         list.appendChild(item);
@@ -194,6 +425,9 @@ function renderWidgetGroup(title, widgets) {
     return wrap;
 }
 
+// ----------------------------------------------------------------------------
+// Bar width (Classic) and Lines
+// ----------------------------------------------------------------------------
 function renderLines() {
     const root = document.getElementById('lines-picker');
     root.innerHTML = '';
@@ -202,6 +436,7 @@ function renderLines() {
         label.innerHTML = `<input type="radio" name="lines" value="${opt}" ${state.lines === opt ? 'checked' : ''} /> ${opt}`;
         label.querySelector('input').addEventListener('change', () => {
             state.lines = opt;
+            persist();
             schedulePreview();
         });
         root.appendChild(label);
@@ -216,6 +451,7 @@ function renderBarWidth() {
     slider.addEventListener('input', (e) => {
         state.barWidth = parseInt(e.target.value, 10);
         display.textContent = state.barWidth;
+        persist();
         schedulePreview();
     });
 }
@@ -223,30 +459,49 @@ function renderBarWidth() {
 function wireButtons() {
     document.getElementById('btn-apply').addEventListener('click', onApply);
     document.getElementById('btn-cancel').addEventListener('click', onCancel);
+    document.getElementById('btn-reset').addEventListener('click', onReset);
+    document.getElementById('btn-palette-reset').addEventListener('click', onPaletteReset);
 }
 
 // ----------------------------------------------------------------------------
-// Preview pipeline (debounced)
+// Preview pipeline
 // ----------------------------------------------------------------------------
-function schedulePreview(delay = 220) {
+function schedulePreview(delay = 180) {
     if (previewTimer) clearTimeout(previewTimer);
     previewTimer = setTimeout(runPreview, delay);
 }
 
-async function runPreview() {
-    setStatus('rendering', 'busy');
-    const body = {
+function buildBody() {
+    // Layout: only send overrides for enabled widgets; trim manifest defaults to keep payload small
+    const layoutPayload = {};
+    for (const name of state.widgets) {
+        const ov = state.layout[name];
+        if (!ov) continue;
+        layoutPayload[name] = {
+            line: ov.line,
+            position: ov.position,
+            priority: ov.priority,
+            ...(ov.barWidth != null ? { barWidth: ov.barWidth } : {}),
+        };
+    }
+    return {
         variant: state.variant,
         widgets: Array.from(state.widgets),
         palette: state.palette,
         barWidth: state.barWidth,
         lines: state.lines,
+        layout: layoutPayload,
+        customPalette: Object.keys(state.customPalette).length ? state.customPalette : null,
     };
+}
+
+async function runPreview() {
+    setStatus('rendering', 'busy');
     try {
         const res = await fetch('/api/preview', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
+            body: JSON.stringify(buildBody()),
         });
         const json = await res.json();
         renderPreview(json.html || '<pre class="statusline error">Empty preview</pre>');
@@ -262,25 +517,18 @@ function renderPreview(html) {
 }
 
 // ----------------------------------------------------------------------------
-// Apply / Cancel
+// Buttons
 // ----------------------------------------------------------------------------
 async function onApply() {
     if (!confirm('Write this configuration to ~/.claude/ and patch settings.json?\n\nYour previous statusline will be backed up.')) {
         return;
     }
     setStatus('applying', 'busy');
-    const body = {
-        variant: state.variant,
-        widgets: Array.from(state.widgets),
-        palette: state.palette,
-        barWidth: state.barWidth,
-        lines: state.lines,
-    };
     try {
         const res = await fetch('/api/apply', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
+            body: JSON.stringify(buildBody()),
         });
         const json = await res.json();
         if (json.ok) {
@@ -300,6 +548,30 @@ async function onApply() {
 async function onCancel() {
     if (!confirm('Close the customizer without applying?')) return;
     await shutdown();
+}
+
+function onReset() {
+    if (!confirm('Reset layout AND custom palette to defaults? Toggles and variant are kept.')) return;
+    state.customPalette = {};
+    state.layout = {};
+    for (const w of manifest.widgets) {
+        state.layout[w.name] = {
+            line: w.line || 1,
+            position: w.position || 'left',
+            priority: w.priority ?? 100,
+        };
+    }
+    persist();
+    renderCustomPaletteEditor();
+    renderLayout();
+    schedulePreview();
+}
+
+function onPaletteReset() {
+    state.customPalette = {};
+    renderCustomPaletteEditor();
+    persist();
+    schedulePreview();
 }
 
 async function shutdown() {

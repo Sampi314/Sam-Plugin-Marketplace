@@ -23,8 +23,8 @@
             $exceedsWarn = "$($colors.C_RED)$($colors.C_BOLD)$([char]0x26A0) 200K!$($colors.C_RESET) "
         }
 
-        # Adaptive bar width based on terminal — capped at 30, min 15
-        $barWidth = 24
+        # Bar width — overridable via $state.barWidth (set by CS_LAYOUT_OVERRIDE)
+        $barWidth = if ($state -and $state.barWidth) { [int]$state.barWidth } else { 24 }
         $width = 0
         if ($pct -lt 50)      { $col = $ansi.Fg(130,220,130) }
         elseif ($pct -lt 70)  { $col = $ansi.Fg(255,220,80)  }

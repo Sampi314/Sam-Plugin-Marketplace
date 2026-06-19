@@ -15,6 +15,7 @@
     </div>
     <div class="topbar-actions">
         <span id="status-pill" class="status-pill idle">idle</span>
+        <button id="btn-reset" class="btn btn-ghost" title="Reset layout/palette to defaults">Reset</button>
         <button id="btn-apply" class="btn btn-primary">Apply</button>
         <button id="btn-cancel" class="btn btn-ghost">Cancel</button>
     </div>
@@ -37,15 +38,24 @@
 
         <div class="card">
             <h3 class="card-title">Palette</h3>
-            <p class="card-hint">Click a palette to preview it</p>
+            <p class="card-hint">Click a palette to set the base</p>
             <div id="palette-grid" class="palette-grid"></div>
         </div>
 
         <div class="card">
-            <h3 class="card-title">Bar width</h3>
-            <p class="card-hint">Width of CTX / 5H / WK bars (cells)</p>
+            <h3 class="card-title">Custom palette <span id="palette-mod-pill" class="badge" style="display:none">modified</span></h3>
+            <p class="card-hint">Override any role. Saved to localStorage.</p>
+            <div id="palette-editor" class="palette-editor"></div>
+            <div class="palette-editor-actions">
+                <button id="btn-palette-reset" class="btn btn-ghost btn-sm">Revert to base</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 class="card-title">Bar width <span class="badge">Classic only</span></h3>
+            <p class="card-hint">For Extended, drag bar chips in Layout to resize each independently.</p>
             <div class="slider-row">
-                <input id="bar-width" type="range" min="10" max="50" step="5" value="30" />
+                <input id="bar-width" type="range" min="10" max="50" step="1" value="30" />
                 <span id="bar-width-value">30</span>
             </div>
         </div>
@@ -57,9 +67,16 @@
     </aside>
 
     <section class="col-right">
+
+        <div class="card">
+            <h3 class="card-title">Layout <span class="badge">drag chips between slots</span></h3>
+            <p class="card-hint">Drag any chip to move it to another line / side. Bar widgets have a width slider on their chip.</p>
+            <div id="layout-board" class="layout-board"></div>
+        </div>
+
         <div class="card">
             <h3 class="card-title">Widgets</h3>
-            <p class="card-hint">Toggle to add / remove. <code>mode-aware</code> is always on (it controls layout).</p>
+            <p class="card-hint">Toggle on/off. Enabled widgets appear as chips in Layout above.</p>
             <div id="widget-groups" class="widget-groups"></div>
         </div>
     </section>

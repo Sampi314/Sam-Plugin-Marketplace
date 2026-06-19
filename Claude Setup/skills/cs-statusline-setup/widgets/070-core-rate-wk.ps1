@@ -19,7 +19,7 @@
         }
         $pct = [double]$rl.seven_day.used_percentage
 
-        $barWidth = 24
+        $barWidth = if ($state -and $state.barWidth) { [int]$state.barWidth } else { 24 }
         $segments = 7
         $dividers = $segments - 1
         $totalBlocks = $barWidth - $dividers

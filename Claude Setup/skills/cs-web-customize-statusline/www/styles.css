@@ -417,6 +417,172 @@ html, body {
     align-self: flex-start;
 }
 
+/* --- Custom palette editor ------------------------------------------ */
+
+.palette-editor {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 10px;
+    margin-bottom: 8px;
+}
+
+.palette-role-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.palette-role-row label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--fg-1);
+    flex: 1;
+    cursor: pointer;
+}
+
+.palette-role-row input[type=color] {
+    width: 26px;
+    height: 22px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: var(--bg-2);
+    cursor: pointer;
+    padding: 0;
+}
+
+.palette-editor-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-sm {
+    font-size: 11px;
+    padding: 4px 8px;
+}
+
+/* --- Layout board (drag-drop) ---------------------------------------- */
+
+.layout-board {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.layout-line-row {
+    display: grid;
+    grid-template-columns: 28px 1fr 1fr;
+    gap: 6px;
+    align-items: stretch;
+}
+
+.layout-line-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fg-2);
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.layout-slot {
+    background: var(--bg-1);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 6px;
+    min-height: 44px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-content: flex-start;
+    transition: border-color 0.12s, background 0.12s;
+}
+
+.layout-slot.empty::before {
+    content: attr(data-empty-label);
+    color: var(--fg-2);
+    opacity: 0.4;
+    font-size: 11px;
+    font-family: var(--mono);
+    align-self: center;
+    margin: auto;
+}
+
+.layout-slot.drop-target {
+    border-color: var(--accent);
+    background: rgba(130, 180, 255, 0.06);
+}
+
+.layout-slot.drop-target.dragover-active {
+    border-style: solid;
+    background: rgba(130, 180, 255, 0.12);
+}
+
+.layout-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fg-0);
+    cursor: grab;
+    user-select: none;
+}
+
+.layout-chip:hover { border-color: var(--accent); }
+
+.layout-chip.dragging {
+    opacity: 0.35;
+    cursor: grabbing;
+}
+
+.layout-chip .chip-drag-handle {
+    color: var(--fg-2);
+    font-size: 10px;
+    letter-spacing: -2px;
+}
+
+.layout-chip.bar-chip {
+    padding-right: 6px;
+}
+
+.layout-chip .chip-bar-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 60px;
+    height: 14px;
+    background: transparent;
+    cursor: pointer;
+}
+
+.layout-chip .chip-bar-slider::-webkit-slider-runnable-track {
+    height: 3px;
+    background: var(--bg-1);
+    border-radius: 2px;
+}
+
+.layout-chip .chip-bar-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 10px;
+    height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    margin-top: -3.5px;
+}
+
+.layout-chip .chip-bar-val {
+    font-size: 9px;
+    color: var(--fg-2);
+    min-width: 16px;
+    text-align: right;
+}
+
 /* --- Footer --------------------------------------------------------- */
 
 .footer {

@@ -18,8 +18,14 @@ $ClaudeDir   = Join-Path $env:USERPROFILE '.claude'
 $LibDir      = Join-Path $ClaudeDir 'lib'
 $WidgetsDir  = Join-Path $ClaudeDir 'statusline-widgets'
 
-# Allow running uninstalled: detect bundled location if libs aren't installed yet
-if (-not (Test-Path $LibDir)) {
+# Optional override (env: CS_BUNDLE_ROOT) — point lib and widgets at a non-default
+# root. Used by the web customizer to invoke the bundled (not-yet-installed)
+# version directly without copying files into a sandbox dir.
+if ($env:CS_BUNDLE_ROOT -and (Test-Path $env:CS_BUNDLE_ROOT)) {
+    $LibDir     = Join-Path $env:CS_BUNDLE_ROOT 'lib'
+    $WidgetsDir = Join-Path $env:CS_BUNDLE_ROOT 'widgets'
+} elseif (-not (Test-Path $LibDir)) {
+    # Allow running uninstalled: detect bundled location if libs aren't installed yet
     $here = Split-Path -Parent $PSCommandPath
     $LibDir = Join-Path $here 'lib'
     $WidgetsDir = Join-Path $here 'widgets'
@@ -104,6 +110,25 @@ if ($env:CS_PALETTE_OVERRIDE) {
     }
 }
 
+# --- Optional custom palette (env: CS_PALETTE_CUSTOM_JSON) -------------------
+# Lets a customizer hand-pick individual colours via JSON like
+# {"C_MODEL":"200 100 250", "C_COST":"255 220 80", ...}
+# Applied after the named-palette override, so individual roles override the base.
+if ($env:CS_PALETTE_CUSTOM_JSON) {
+    try {
+        $custom = $env:CS_PALETTE_CUSTOM_JSON | ConvertFrom-Json -ErrorAction Stop
+        foreach ($prop in $custom.PSObject.Properties) {
+            $key = $prop.Name
+            if ($colors.ContainsKey($key)) {
+                $t = ([string]$prop.Value) -split '\s+'
+                if ($t.Count -ge 3) {
+                    $colors[$key] = $ansi.Fg([int]$t[0], [int]$t[1], [int]$t[2])
+                }
+            }
+        }
+    } catch {}
+}
+
 # --- Terminal width (Bundle B foundation) ------------------------------------
 $termWidth = 100
 if ($env:COLUMNS) {
@@ -122,7 +147,7 @@ if ($ctx.context_window -and $null -ne $ctx.context_window.used_percentage) {
     $ctxPct = [double]$ctx.context_window.used_percentage
 }
 
-if (Get-Command Add-StatuslineSample -ErrorAction SilentlyContinue) {
+if (-not $env:CS_PREVIEW_MODE -and (Get-Command Add-StatuslineSample -ErrorAction SilentlyContinue)) {
     Add-StatuslineSample -SessionId $sessionId -Metrics @{
         cost_per_min = $costPerMin
         ctx_pct      = $ctxPct
@@ -131,7 +156,7 @@ if (Get-Command Add-StatuslineSample -ErrorAction SilentlyContinue) {
 }
 
 # --- Emit baseline tick event (Layer 32) -------------------------------------
-if (Get-Command Emit-Event -ErrorAction SilentlyContinue) {
+if (-not $env:CS_PREVIEW_MODE -and (Get-Command Emit-Event -ErrorAction SilentlyContinue)) {
     Emit-Event -Type 'tick' -Payload @{
         session_id   = $sessionId
         ctx_pct      = $ctxPct
@@ -152,6 +177,37 @@ if (Get-Command Emit-Event -ErrorAction SilentlyContinue) {
 
 # --- Discover widgets and render ---------------------------------------------
 $widgets = Get-WidgetManifests -BundledDirs @() -UserDirs @($WidgetsDir)
+
+# Optional allowlist (env: CS_WIDGETS_ALLOW) — comma-separated widget names.
+# Used by the web customizer to filter widgets without copying files.
+if ($env:CS_WIDGETS_ALLOW) {
+    $allow = @($env:CS_WIDGETS_ALLOW -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    if ($allow.Count -gt 0) {
+        $allow += 'mode-aware'   # layout host is essential
+        $widgets = @($widgets | Where-Object { $allow -contains $_.Name })
+    }
+}
+
+# Optional layout / state override (env: CS_LAYOUT_OVERRIDE) — JSON keyed by
+# widget Name with any of {line, position, priority, barWidth}. Mutates the
+# manifests in place so the host's existing layout pass picks them up.
+if ($env:CS_LAYOUT_OVERRIDE) {
+    try {
+        $layoutOverride = $env:CS_LAYOUT_OVERRIDE | ConvertFrom-Json -ErrorAction Stop
+        foreach ($w in $widgets) {
+            $entry = $layoutOverride.($w.Name)
+            if ($entry) {
+                if ($null -ne $entry.line)     { $w.Line     = [int]$entry.line }
+                if ($entry.position)           { $w.Position = [string]$entry.position }
+                if ($null -ne $entry.priority) { $w.Priority = [int]$entry.priority }
+                if ($null -ne $entry.barWidth) {
+                    if (-not $w.State) { $w.State = @{} }
+                    $w.State.barWidth = [int]$entry.barWidth
+                }
+            }
+        }
+    } catch {}
+}
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
