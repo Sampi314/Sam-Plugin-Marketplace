@@ -1,4 +1,4 @@
-# ============================================================================
+﻿# ============================================================================
 # lib/widget-host.ps1 — Widget discovery, scheduling, and layout engine
 # ============================================================================
 #
@@ -142,8 +142,11 @@ function Render-Statusline {
         [Parameter(Mandatory)]$Colors,
         [Parameter(Mandatory)]$Ansi,
         [Parameter(Mandatory)]$Widgets,
-        [int]$TerminalWidth = 100
+        [int]$TerminalWidth = 100,
+        [int]$Columns = 3
     )
+    if ($Columns -lt 1) { $Columns = 1 }
+    if ($Columns -gt 12) { $Columns = 12 }
 
     # First pass: invoke renders, capture outputs
     $rendered = @()
@@ -169,49 +172,59 @@ function Render-Statusline {
     # Drop any rendered entries that Mutate cleared to empty
     $rendered = @($rendered | Where-Object { -not [string]::IsNullOrEmpty($_.Output) })
 
-    # Group by line and lay out. Positions: left | center | right | full.
-    # 'full' wins the line. Otherwise: left is left-edge, right is right-edge,
-    # center is positioned at terminal midpoint. Padding between bands is at
-    # least one space; if widgets don't fit, padding collapses to one space.
-    # Sort numerically — Group-Object names are strings, so a default Sort would
-    # order line 10 before line 2 ("10" < "2" lex).
+    # Group widgets per line, then per line lay them out across K columns.
+    # Each widget has a Column index (1-indexed). Legacy Position values
+    # ('left' | 'center' | 'right') map to columns: left=1, center=ceil(K/2),
+    # right=K. 'full' still wins the line. Within a column, widgets are joined
+    # with ' | '. Column c starts at floor((c-1) * TerminalWidth / K).
     $byLine = $rendered | Group-Object { $_.Widget.Line } | Sort-Object { [int]$_.Name }
     $sep = "$($Ansi.Fg(80,80,100)) | $($Ansi.Reset())"
     $lines = @()
     foreach ($lineGroup in $byLine) {
-        $left   = @($lineGroup.Group | Where-Object { $_.Widget.Position -eq 'left'   } | Sort-Object { $_.Widget.Priority })
-        $center = @($lineGroup.Group | Where-Object { $_.Widget.Position -eq 'center' } | Sort-Object { $_.Widget.Priority })
-        $right  = @($lineGroup.Group | Where-Object { $_.Widget.Position -eq 'right'  } | Sort-Object { $_.Widget.Priority })
-        $full   = @($lineGroup.Group | Where-Object { $_.Widget.Position -eq 'full'   } | Sort-Object { $_.Widget.Priority })
-
+        $full = @($lineGroup.Group | Where-Object { $_.Widget.Position -eq 'full' -or $_.Widget.Column -eq 'full' } | Sort-Object { $_.Widget.Priority })
         if ($full.Count -gt 0) {
             $lines += ($full[0].Output)
             continue
         }
 
-        $leftStr   = ($left   | ForEach-Object { $_.Output }) -join $sep
-        $centerStr = ($center | ForEach-Object { $_.Output }) -join $sep
-        $rightStr  = ($right  | ForEach-Object { $_.Output }) -join $sep
+        # Resolve each widget's column index (1..K)
+        $byColumn = @{}
+        foreach ($entry in $lineGroup.Group) {
+            $col = $null
+            if ($null -ne $entry.Widget.Column -and "$($entry.Widget.Column)" -match '^\d+$') {
+                $col = [int]$entry.Widget.Column
+            } else {
+                # Map legacy Position string
+                switch ([string]$entry.Widget.Position) {
+                    'left'   { $col = 1 }
+                    'center' { $col = [math]::Ceiling($Columns / 2.0) }
+                    'right'  { $col = $Columns }
+                    default  { $col = 1 }
+                }
+            }
+            if ($col -lt 1) { $col = 1 }
+            if ($col -gt $Columns) { $col = $Columns }
+            if (-not $byColumn.ContainsKey($col)) { $byColumn[$col] = @() }
+            $byColumn[$col] += $entry
+        }
 
-        $leftW   = if ($leftStr)   { $Ansi.Width($leftStr)   } else { 0 }
-        $centerW = if ($centerStr) { $Ansi.Width($centerStr) } else { 0 }
-        $rightW  = if ($rightStr)  { $Ansi.Width($rightStr)  } else { 0 }
+        # Build per-column rendered strings (priority-sorted, joined with ' | ')
+        $colStrings = @{}
+        foreach ($c in $byColumn.Keys) {
+            $colStrings[$c] = ($byColumn[$c] | Sort-Object { $_.Widget.Priority } | ForEach-Object { $_.Output }) -join $sep
+        }
 
-        if ($centerStr -and $rightStr) {
-            $centerStart = [math]::Floor(($TerminalWidth - $centerW) / 2)
-            $padBefore   = [math]::Max(1, $centerStart - $leftW)
-            $padAfter    = [math]::Max(1, $TerminalWidth - $leftW - $padBefore - $centerW - $rightW)
-            $line = $leftStr + (' ' * $padBefore) + $centerStr + (' ' * $padAfter) + $rightStr
-        } elseif ($centerStr) {
-            $centerStart = [math]::Floor(($TerminalWidth - $centerW) / 2)
-            $padBefore   = [math]::Max(1, $centerStart - $leftW)
-            $line = $leftStr + (' ' * $padBefore) + $centerStr
-        } elseif ($rightStr) {
-            $padW = $TerminalWidth - $leftW - $rightW
-            if ($padW -lt 1) { $padW = 1 }
-            $line = $leftStr + (' ' * $padW) + $rightStr
-        } else {
-            $line = $leftStr
+        # Lay columns out at fixed grid positions
+        $line = ''
+        $cursorX = 0
+        for ($c = 1; $c -le $Columns; $c++) {
+            if (-not $colStrings.ContainsKey($c)) { continue }
+            $slotStart = [math]::Floor(($c - 1) * $TerminalWidth / $Columns)
+            $padBefore = [math]::Max(0, $slotStart - $cursorX)
+            if ($cursorX -gt 0 -and $padBefore -lt 1) { $padBefore = 1 }
+            $line += (' ' * $padBefore)
+            $line += $colStrings[$c]
+            $cursorX += $padBefore + ($Ansi.Width($colStrings[$c]))
         }
         $lines += $line
     }

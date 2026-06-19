@@ -470,9 +470,38 @@ html, body {
 
 .layout-line-row {
     display: grid;
-    grid-template-columns: 28px 1fr 1fr 1fr;
+    grid-template-columns: 28px repeat(var(--col-count, 3), 1fr);
     gap: 6px;
     align-items: stretch;
+}
+
+.columns-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 10px;
+}
+
+.columns-row label {
+    font-size: 11px;
+    color: var(--fg-1);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    flex: 0 0 auto;
+}
+
+.columns-row input[type=range] {
+    flex: 1;
+    accent-color: var(--accent);
+}
+
+.columns-row span {
+    font-family: var(--mono);
+    color: var(--fg-0);
+    min-width: 18px;
+    text-align: right;
 }
 
 .layout-line-label {

@@ -47,16 +47,29 @@ const PALETTE_ROLES = [
 const BAR_WIDGETS    = new Set(['core-ctx', 'core-rate-5h', 'core-rate-wk']);
 const SPACER_WIDGETS = new Set(['spacer']);
 const MAX_LINES = 9;
-const POSITIONS = ['left', 'center', 'right'];
+const MAX_COLUMNS = 12;
 
 const state = {
     variant: 'Extended',
     palette: 'Sam',
     customPalette: {},
     instances: [],
+    columns: 3,            // global column count (all lines share K)
     barWidth: 30,
     lines: 'all',
 };
+
+// Legacy position string -> column index when K=3 (backward-compat shim for
+// loaded instances that pre-date the column model).
+function positionToColumn(pos, K) {
+    K = K || 3;
+    switch (pos) {
+        case 'left':   return 1;
+        case 'center': return Math.ceil(K / 2);
+        case 'right':  return K;
+        default:       return 1;
+    }
+}
 
 let manifest = null;
 let previewTimer = null;
@@ -97,7 +110,7 @@ function makeInstance(name) {
         id: nextInstanceId(name),
         name,
         line: def.line || 1,
-        position: def.position || 'left',
+        column: positionToColumn(def.position || 'left', state.columns),
         priority: def.priority ?? 100,
     };
     if (SPACER_WIDGETS.has(name)) {
@@ -128,12 +141,13 @@ async function init() {
             id: `${w.name}#1`,
             name: w.name,
             line: w.line || 1,
-            position: w.position || 'left',
+            column: positionToColumn(w.position || 'left', state.columns),
             priority: w.priority ?? 100,
         });
     }
 
     loadPersisted();
+    migratePositionsToColumns();
 
     renderVariants();
     renderPalettes();
@@ -157,6 +171,7 @@ function persist() {
             palette: state.palette,
             customPalette: state.customPalette,
             instances: state.instances,
+            columns: state.columns,
             barWidth: state.barWidth,
             lines: state.lines,
         }));
@@ -172,9 +187,24 @@ function loadPersisted() {
         if (saved.palette)       state.palette       = saved.palette;
         if (saved.customPalette) state.customPalette = saved.customPalette;
         if (Array.isArray(saved.instances)) state.instances = saved.instances;
+        if (saved.columns)       state.columns       = saved.columns;
         if (saved.barWidth)      state.barWidth      = saved.barWidth;
         if (saved.lines)         state.lines         = saved.lines;
     } catch {}
+}
+
+function migratePositionsToColumns() {
+    // Pre-column instances may have `position: 'left'|'center'|'right'` but no
+    // `column`. Convert and drop the legacy field.
+    let migrated = 0;
+    for (const inst of state.instances) {
+        if (inst.column == null && inst.position) {
+            inst.column = positionToColumn(inst.position, state.columns);
+            delete inst.position;
+            migrated++;
+        }
+    }
+    if (migrated) persist();
 }
 
 // ----------------------------------------------------------------------------
@@ -293,10 +323,14 @@ function updatePaletteModPill() {
 function renderLayout() {
     const board = document.getElementById('layout-board');
     board.innerHTML = '';
-    // Bucket instances by (line, position)
+    const K = state.columns;
+    // Set the row's grid template based on K
+    board.style.setProperty('--col-count', K);
+    // Bucket instances by (line, column)
     const buckets = {};
     for (const inst of state.instances) {
-        const key = `L${inst.line}-${inst.position}`;
+        const col = inst.column ?? 1;
+        const key = `L${inst.line}-C${col}`;
         (buckets[key] = buckets[key] || []).push(inst);
     }
     for (const key of Object.keys(buckets)) {
@@ -305,20 +339,21 @@ function renderLayout() {
     for (let line = 1; line <= MAX_LINES; line++) {
         const row = document.createElement('div');
         row.className = 'layout-line-row';
+        row.style.setProperty('--col-count', K);
         row.innerHTML = `<div class="layout-line-label">L${line}</div>`;
-        for (const pos of POSITIONS) {
-            row.appendChild(makeSlot(line, pos, buckets[`L${line}-${pos}`] || []));
+        for (let col = 1; col <= K; col++) {
+            row.appendChild(makeSlot(line, col, buckets[`L${line}-C${col}`] || []));
         }
         board.appendChild(row);
     }
 }
 
-function makeSlot(line, position, items) {
+function makeSlot(line, column, items) {
     const slot = document.createElement('div');
     slot.className = 'layout-slot' + (items.length === 0 ? ' empty' : '');
     slot.dataset.line = line;
-    slot.dataset.position = position;
-    slot.dataset.emptyLabel = `L${line} · ${position}`;
+    slot.dataset.column = column;
+    slot.dataset.emptyLabel = `L${line} · C${column}`;
 
     for (const inst of items) slot.appendChild(makeChip(inst));
 
@@ -335,9 +370,8 @@ function makeSlot(line, position, items) {
         const inst = state.instances.find(i => i.id === dragInfo.instanceId);
         if (!inst) return;
         inst.line = line;
-        inst.position = position;
-        // Place at end of new slot by giving it max priority + 10
-        const peers = state.instances.filter(o => o !== inst && o.line === line && o.position === position).map(o => o.priority ?? 100);
+        inst.column = column;
+        const peers = state.instances.filter(o => o !== inst && o.line === line && (o.column ?? 1) === column).map(o => o.priority ?? 100);
         inst.priority = (peers.length ? Math.max(...peers) : 0) + 10;
         persist();
         renderLayout();
@@ -546,6 +580,26 @@ function wireButtons() {
     document.getElementById('btn-cancel').addEventListener('click', onCancel);
     document.getElementById('btn-reset').addEventListener('click', onReset);
     document.getElementById('btn-palette-reset').addEventListener('click', onPaletteReset);
+
+    // Columns slider
+    const colSlider = document.getElementById('columns-slider');
+    const colValue  = document.getElementById('columns-value');
+    colSlider.value = state.columns;
+    colValue.textContent = state.columns;
+    colSlider.addEventListener('input', (e) => {
+        const k = parseInt(e.target.value, 10);
+        state.columns = k;
+        colValue.textContent = k;
+        // Re-clamp every instance's column to the new K
+        for (const inst of state.instances) {
+            if (inst.column == null) inst.column = 1;
+            if (inst.column > k) inst.column = k;
+            if (inst.column < 1) inst.column = 1;
+        }
+        persist();
+        renderLayout();
+        schedulePreview();
+    });
 }
 
 // ----------------------------------------------------------------------------
@@ -561,6 +615,7 @@ function buildBody() {
         variant: state.variant,
         instances: state.instances.map(i => ({ ...i })),
         palette: state.palette,
+        columns: state.columns,
         barWidth: state.barWidth,
         lines: state.lines,
         customPalette: Object.keys(state.customPalette).length ? state.customPalette : null,

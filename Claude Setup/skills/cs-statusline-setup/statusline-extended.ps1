@@ -1,4 +1,4 @@
-# ============================================================================
+﻿# ============================================================================
 # statusline-extended.ps1 — Widget-host entry point (Phase 1)
 # ============================================================================
 #
@@ -217,7 +217,7 @@ if (-not $instanceSource) {
 #   - Array of {id, name, line, position, priority, ...state}  (instance list)
 #   - Object {name: {line,position,priority,...state}}         (legacy, one instance per key)
 #   - $null                                                    (one instance per base, defaults)
-$reservedLayoutKeys = @('id','name','line','position','priority')
+$reservedLayoutKeys = @('id','name','line','position','priority','column')
 $widgets = @()
 if ($instanceSource -is [System.Collections.IList]) {
     foreach ($entry in $instanceSource) {
@@ -229,6 +229,7 @@ if ($instanceSource -is [System.Collections.IList]) {
         if ($null -ne $entry.line)     { $w.Line     = [int]$entry.line }
         if ($entry.position)           { $w.Position = [string]$entry.position }
         if ($null -ne $entry.priority) { $w.Priority = [int]$entry.priority }
+        if ($null -ne $entry.column)   { $w.Column   = [int]$entry.column }
         foreach ($prop in $entry.PSObject.Properties) {
             if ($reservedLayoutKeys -contains $prop.Name) { continue }
             $w.State[$prop.Name] = $prop.Value
@@ -251,6 +252,7 @@ if ($instanceSource -is [System.Collections.IList]) {
         if ($null -ne $entry.line)     { $w.Line     = [int]$entry.line }
         if ($entry.position)           { $w.Position = [string]$entry.position }
         if ($null -ne $entry.priority) { $w.Priority = [int]$entry.priority }
+        if ($null -ne $entry.column)   { $w.Column   = [int]$entry.column }
         foreach ($sp in $entry.PSObject.Properties) {
             if ($reservedLayoutKeys -contains $sp.Name) { continue }
             $w.State[$sp.Name] = $sp.Value
@@ -272,6 +274,14 @@ if ($instanceSource -is [System.Collections.IList]) {
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-$lines = Render-Statusline -Ctx $ctx -Caps $caps -Colors $colors -Ansi $ansi -Widgets $widgets -TerminalWidth $termWidth
+# Global column count (env: CS_LAYOUT_COLUMNS). Defaults to 3 so legacy
+# left/center/right layouts render unchanged.
+$columns = 3
+if ($env:CS_LAYOUT_COLUMNS) {
+    $cv = 0
+    if ([int]::TryParse($env:CS_LAYOUT_COLUMNS, [ref]$cv) -and $cv -ge 1 -and $cv -le 12) { $columns = $cv }
+}
+
+$lines = Render-Statusline -Ctx $ctx -Caps $caps -Colors $colors -Ansi $ansi -Widgets $widgets -TerminalWidth $termWidth -Columns $columns
 
 foreach ($line in $lines) { Write-Host $line }

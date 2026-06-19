@@ -176,10 +176,11 @@ try {
 function Render-Preview {
     param(
         [string]$Variant,
-        [object]$Instances = $null,       # Array of {id,name,line,position,priority,...state}
+        [object]$Instances = $null,       # Array of {id,name,line,column,position,priority,...state}
         [string]$Palette,
         [int]$BarWidth,
         [string]$Lines,
+        [int]$Columns = 3,
         [object]$CustomPalette = $null    # PSCustomObject: role -> "R G B"
     )
 
@@ -196,12 +197,14 @@ function Render-Preview {
         CS_PALETTE_OVERRIDE     = $env:CS_PALETTE_OVERRIDE
         CS_PALETTE_CUSTOM_JSON  = $env:CS_PALETTE_CUSTOM_JSON
         CS_LAYOUT_OVERRIDE      = $env:CS_LAYOUT_OVERRIDE
+        CS_LAYOUT_COLUMNS       = $env:CS_LAYOUT_COLUMNS
         CS_PREVIEW_MODE         = $env:CS_PREVIEW_MODE
     }
 
     try {
         $env:CS_BUNDLE_ROOT      = $SetupRoot
         $env:CS_PALETTE_OVERRIDE = $Palette
+        $env:CS_LAYOUT_COLUMNS   = [string]$Columns
         $env:CS_PREVIEW_MODE     = '1'
 
         # Instances are the single source of truth. The bundled script accepts
@@ -409,12 +412,14 @@ while (-not $shouldStop) {
                 $bodyText = Read-RequestBody -Request $req
                 $body = $bodyText | ConvertFrom-Json
                 $instances = if ($body.instances) { @($body.instances) } else { @() }
+                $cols = if ($body.columns) { [int]$body.columns } else { 3 }
                 $html = Render-Preview `
                     -Variant        ([string]$body.variant) `
                     -Instances      $instances `
                     -Palette        ([string]$body.palette) `
                     -BarWidth       ([int]($body.barWidth)) `
                     -Lines          ([string]$body.lines) `
+                    -Columns        $cols `
                     -CustomPalette  $body.customPalette
                 $payload = @{ html = $html } | ConvertTo-Json -Depth 4 -Compress
                 Send-StringResponse -Response $res -Body $payload -ContentType 'application/json; charset=utf-8'

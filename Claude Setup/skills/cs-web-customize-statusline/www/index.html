@@ -70,7 +70,12 @@
 
         <div class="card">
             <h3 class="card-title">Layout <span class="badge">drag chips between slots</span></h3>
-            <p class="card-hint">Drag any chip to move it to another line / side. Bar widgets have a width slider on their chip.</p>
+            <p class="card-hint">Drag any chip to move it between cells. Drop on an empty cell to place. Bar widgets have a width slider on their chip.</p>
+            <div class="columns-row">
+                <label for="columns-slider">Columns per line</label>
+                <input id="columns-slider" type="range" min="1" max="12" step="1" value="3" />
+                <span id="columns-value">3</span>
+            </div>
             <div id="layout-board" class="layout-board"></div>
         </div>
 
