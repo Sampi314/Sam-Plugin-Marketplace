@@ -83,6 +83,9 @@ const state = {
     columns: 3,            // global column count (all lines share K)
     barWidth: 30,
     lines: 'all',
+    poolFolds: {           // category collapse state in the widget pool
+        'Skill overlays': true,
+    },
 };
 
 // Legacy position string -> column index when K=3 (backward-compat shim for
@@ -328,6 +331,7 @@ function persist() {
             columns: state.columns,
             barWidth: state.barWidth,
             lines: state.lines,
+            poolFolds: state.poolFolds,
         }));
     } catch {}
 }
@@ -344,6 +348,7 @@ function loadPersisted() {
         if (saved.columns)       state.columns       = saved.columns;
         if (saved.barWidth)      state.barWidth      = saved.barWidth;
         if (saved.lines)         state.lines         = saved.lines;
+        if (saved.poolFolds)     state.poolFolds     = saved.poolFolds;
     } catch {}
 }
 
@@ -674,20 +679,43 @@ function renderWidgetPool() {
     root.innerHTML = '';
     const allWidgets = manifest.widgets.filter(w => w.name !== 'mode-aware');
 
-    // Order: walk WIDGET_GROUPS for stable grouping, fall through to leftovers
-    const ordered = [];
-    const seen = new Set();
     for (const group of WIDGET_GROUPS) {
-        for (const name of group.names) {
-            const w = allWidgets.find(x => x.name === name);
-            if (w && !seen.has(w.name)) { ordered.push(w); seen.add(w.name); }
-        }
-    }
-    for (const w of allWidgets) {
-        if (!seen.has(w.name)) ordered.push(w);
+        const groupWidgets = group.names
+            .map(n => allWidgets.find(x => x.name === n))
+            .filter(Boolean);
+        if (!groupWidgets.length) continue;
+        root.appendChild(renderPoolGroup(group.title, groupWidgets));
     }
 
-    for (const w of ordered) root.appendChild(makePoolChip(w));
+    // Orphans — widgets not in any declared group
+    const placed = new Set(WIDGET_GROUPS.flatMap(g => g.names));
+    const orphans = allWidgets.filter(w => !placed.has(w.name));
+    if (orphans.length) root.appendChild(renderPoolGroup('Other', orphans));
+}
+
+function renderPoolGroup(title, widgets) {
+    const folded = !!(state.poolFolds && state.poolFolds[title]);
+    const group = document.createElement('div');
+    group.className = 'pool-group' + (folded ? ' folded' : '');
+    group.innerHTML = `
+        <button class="pool-group-head" type="button" aria-expanded="${!folded}">
+            <span class="pool-group-arrow" aria-hidden="true">▾</span>
+            <span class="pool-group-title">${title}</span>
+            <span class="pool-group-count">${widgets.length}</span>
+        </button>
+        <div class="pool-group-body"></div>
+    `;
+    const body = group.querySelector('.pool-group-body');
+    for (const w of widgets) body.appendChild(makePoolChip(w));
+    group.querySelector('.pool-group-head').addEventListener('click', () => {
+        state.poolFolds = state.poolFolds || {};
+        state.poolFolds[title] = !state.poolFolds[title];
+        const nowFolded = !!state.poolFolds[title];
+        group.classList.toggle('folded', nowFolded);
+        group.querySelector('.pool-group-head').setAttribute('aria-expanded', String(!nowFolded));
+        persist();
+    });
+    return group;
 }
 
 function makePoolChip(w) {
