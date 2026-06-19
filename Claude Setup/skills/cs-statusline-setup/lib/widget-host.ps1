@@ -145,27 +145,43 @@ function Render-Statusline {
     # Drop any rendered entries that Mutate cleared to empty
     $rendered = @($rendered | Where-Object { -not [string]::IsNullOrEmpty($_.Output) })
 
-    # Group by line and lay out
+    # Group by line and lay out. Positions: left | center | right | full.
+    # 'full' wins the line. Otherwise: left is left-edge, right is right-edge,
+    # center is positioned at terminal midpoint. Padding between bands is at
+    # least one space; if widgets don't fit, padding collapses to one space.
     $byLine = $rendered | Group-Object { $_.Widget.Line } | Sort-Object Name
+    $sep = "$($Ansi.Fg(80,80,100)) | $($Ansi.Reset())"
     $lines = @()
     foreach ($lineGroup in $byLine) {
-        $left  = @($lineGroup.Group | Where-Object { $_.Widget.Position -eq 'left' }  | Sort-Object { $_.Widget.Priority })
-        $right = @($lineGroup.Group | Where-Object { $_.Widget.Position -eq 'right' } | Sort-Object { $_.Widget.Priority })
-        $full  = @($lineGroup.Group | Where-Object { $_.Widget.Position -eq 'full' }  | Sort-Object { $_.Widget.Priority })
+        $left   = @($lineGroup.Group | Where-Object { $_.Widget.Position -eq 'left'   } | Sort-Object { $_.Widget.Priority })
+        $center = @($lineGroup.Group | Where-Object { $_.Widget.Position -eq 'center' } | Sort-Object { $_.Widget.Priority })
+        $right  = @($lineGroup.Group | Where-Object { $_.Widget.Position -eq 'right'  } | Sort-Object { $_.Widget.Priority })
+        $full   = @($lineGroup.Group | Where-Object { $_.Widget.Position -eq 'full'   } | Sort-Object { $_.Widget.Priority })
 
         if ($full.Count -gt 0) {
-            # 'full' wins the line
             $lines += ($full[0].Output)
             continue
         }
 
-        $leftStr  = ($left  | ForEach-Object { $_.Output }) -join "$($Ansi.Fg(80,80,100)) | $($Ansi.Reset())"
-        $rightStr = ($right | ForEach-Object { $_.Output }) -join "$($Ansi.Fg(80,80,100)) | $($Ansi.Reset())"
+        $leftStr   = ($left   | ForEach-Object { $_.Output }) -join $sep
+        $centerStr = ($center | ForEach-Object { $_.Output }) -join $sep
+        $rightStr  = ($right  | ForEach-Object { $_.Output }) -join $sep
 
-        if ($rightStr) {
-            $leftW  = $Ansi.Width($leftStr)
-            $rightW = $Ansi.Width($rightStr)
-            $padW   = $TerminalWidth - $leftW - $rightW
+        $leftW   = if ($leftStr)   { $Ansi.Width($leftStr)   } else { 0 }
+        $centerW = if ($centerStr) { $Ansi.Width($centerStr) } else { 0 }
+        $rightW  = if ($rightStr)  { $Ansi.Width($rightStr)  } else { 0 }
+
+        if ($centerStr -and $rightStr) {
+            $centerStart = [math]::Floor(($TerminalWidth - $centerW) / 2)
+            $padBefore   = [math]::Max(1, $centerStart - $leftW)
+            $padAfter    = [math]::Max(1, $TerminalWidth - $leftW - $padBefore - $centerW - $rightW)
+            $line = $leftStr + (' ' * $padBefore) + $centerStr + (' ' * $padAfter) + $rightStr
+        } elseif ($centerStr) {
+            $centerStart = [math]::Floor(($TerminalWidth - $centerW) / 2)
+            $padBefore   = [math]::Max(1, $centerStart - $leftW)
+            $line = $leftStr + (' ' * $padBefore) + $centerStr
+        } elseif ($rightStr) {
+            $padW = $TerminalWidth - $leftW - $rightW
             if ($padW -lt 1) { $padW = 1 }
             $line = $leftStr + (' ' * $padW) + $rightStr
         } else {

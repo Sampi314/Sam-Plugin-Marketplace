@@ -128,6 +128,11 @@ function Get-WidgetDescription([string]$name) {
         'skill-audit-general'        { 'Audit progress overlay when audit-general skill is active' }
         'skill-financial-modelling'  { 'Financial-modelling phase indicator when active' }
         'skill-writing-tools'        { 'Writing-tools progress overlay when active' }
+        'clock'                      { 'Current local time (HH:MM, optionally with seconds or 12h)' }
+        'date'                       { 'Current local date (default yyyy-MM-dd, format configurable)' }
+        'cwd'                        { 'Current working directory with smart truncation' }
+        'token-breakdown'            { 'Current-tick input / output / cache tokens explicit' }
+        'spacer'                     { 'User-customisable text widget (dividers, mottos, badges)' }
         default                      { '' }
     }
 }

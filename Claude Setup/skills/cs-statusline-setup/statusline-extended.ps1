@@ -189,21 +189,24 @@ if ($env:CS_WIDGETS_ALLOW) {
 }
 
 # Optional layout / state override (env: CS_LAYOUT_OVERRIDE) — JSON keyed by
-# widget Name with any of {line, position, priority, barWidth}. Mutates the
-# manifests in place so the host's existing layout pass picks them up.
+# widget Name. The reserved fields {line, position, priority} map to the
+# manifest's Line/Position/Priority. Any other field is copied to the widget's
+# $state — so widgets can read e.g. $state.barWidth, $state.text, $state.color
+# without each one needing its own env var.
+$reservedLayoutKeys = @('line','position','priority')
 if ($env:CS_LAYOUT_OVERRIDE) {
     try {
         $layoutOverride = $env:CS_LAYOUT_OVERRIDE | ConvertFrom-Json -ErrorAction Stop
         foreach ($w in $widgets) {
             $entry = $layoutOverride.($w.Name)
-            if ($entry) {
-                if ($null -ne $entry.line)     { $w.Line     = [int]$entry.line }
-                if ($entry.position)           { $w.Position = [string]$entry.position }
-                if ($null -ne $entry.priority) { $w.Priority = [int]$entry.priority }
-                if ($null -ne $entry.barWidth) {
-                    if (-not $w.State) { $w.State = @{} }
-                    $w.State.barWidth = [int]$entry.barWidth
-                }
+            if (-not $entry) { continue }
+            if ($null -ne $entry.line)     { $w.Line     = [int]$entry.line }
+            if ($entry.position)           { $w.Position = [string]$entry.position }
+            if ($null -ne $entry.priority) { $w.Priority = [int]$entry.priority }
+            if (-not $w.State) { $w.State = @{} }
+            foreach ($prop in $entry.PSObject.Properties) {
+                if ($reservedLayoutKeys -contains $prop.Name) { continue }
+                $w.State[$prop.Name] = $prop.Value
             }
         }
     } catch {}

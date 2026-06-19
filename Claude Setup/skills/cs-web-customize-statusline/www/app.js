@@ -33,6 +33,9 @@ const PALETTE_ROLES = [
 ];
 
 const BAR_WIDGETS = new Set(['core-ctx', 'core-rate-5h', 'core-rate-wk']);
+const SPACER_WIDGETS = new Set(['spacer']);
+const MAX_LINES = 9;
+const POSITIONS = ['left', 'center', 'right'];
 
 const state = {
     variant: 'Extended',
@@ -56,6 +59,8 @@ const WIDGET_GROUPS = [
     { title: 'Rate limits',          names: ['core-rate-5h', 'core-rate-wk'] },
     { title: 'Sparklines & signals', names: ['sparkline-cost', 'sparkline-ctx', 'thinking', 'output-style', 'session-fingerprint'] },
     { title: 'Git & PRs',            names: ['git-status', 'pr-badge'] },
+    { title: 'Clock & path',         names: ['clock', 'date', 'cwd', 'token-breakdown'] },
+    { title: 'Custom text',          names: ['spacer'] },
     { title: 'Skill overlays',       names: ['skill-audit-general', 'skill-financial-modelling', 'skill-writing-tools'] },
 ];
 
@@ -272,13 +277,14 @@ function renderLayout() {
         buckets[key].sort((a, b) => a.priority - b.priority);
     }
 
-    // Draw rows for lines 1..5
-    for (let line = 1; line <= 5; line++) {
+    // Draw rows for lines 1..MAX_LINES with three slots each (left | center | right)
+    for (let line = 1; line <= MAX_LINES; line++) {
         const row = document.createElement('div');
         row.className = 'layout-line-row';
         row.innerHTML = `<div class="layout-line-label">L${line}</div>`;
-        row.appendChild(makeSlot(line, 'left',  buckets[`L${line}-left`]  || []));
-        row.appendChild(makeSlot(line, 'right', buckets[`L${line}-right`] || []));
+        for (const pos of POSITIONS) {
+            row.appendChild(makeSlot(line, pos, buckets[`L${line}-${pos}`] || []));
+        }
         board.appendChild(row);
     }
 }
@@ -327,24 +333,29 @@ function makeSlot(line, position, items) {
 
 function makeChip(widgetName) {
     const chip = document.createElement('div');
-    chip.className = 'layout-chip' + (BAR_WIDGETS.has(widgetName) ? ' bar-chip' : '');
+    const isBar = BAR_WIDGETS.has(widgetName);
+    const isSpacer = SPACER_WIDGETS.has(widgetName);
+    chip.className = 'layout-chip' + (isBar ? ' bar-chip' : '') + (isSpacer ? ' spacer-chip' : '');
     chip.draggable = true;
     chip.dataset.widget = widgetName;
     const ov = state.layout[widgetName] || {};
-    const w = manifest.widgets.find(m => m.name === widgetName);
-    const barWidth = ov.barWidth ?? 24;
 
     let chipHtml = `<span class="chip-drag-handle" aria-hidden="true">⋮⋮</span><span class="chip-name">${widgetName}</span>`;
-    if (BAR_WIDGETS.has(widgetName)) {
+    if (isBar) {
+        const barWidth = ov.barWidth ?? 24;
         chipHtml += `<input type="range" class="chip-bar-slider" min="6" max="50" step="1" value="${barWidth}" title="Bar width" />`;
         chipHtml += `<span class="chip-bar-val">${barWidth}</span>`;
+    } else if (isSpacer) {
+        const text = ov.text ?? '|';
+        const color = ov.color ?? '#888888';
+        chipHtml += `<input type="text" class="chip-spacer-text" maxlength="32" value="${escapeAttr(text)}" title="Text" />`;
+        chipHtml += `<input type="color" class="chip-spacer-color" value="${color}" title="Colour" />`;
     }
     chip.innerHTML = chipHtml;
 
     chip.addEventListener('dragstart', (e) => {
         dragInfo = { widgetName };
         chip.classList.add('dragging');
-        // Some browsers require data to be set for the drag to fire
         try { e.dataTransfer.setData('text/plain', widgetName); } catch {}
         e.dataTransfer.effectAllowed = 'move';
     });
@@ -354,6 +365,7 @@ function makeChip(widgetName) {
         dragInfo = null;
     });
 
+    // Bar slider — drag stop + state update
     const slider = chip.querySelector('.chip-bar-slider');
     if (slider) {
         const valEl = chip.querySelector('.chip-bar-val');
@@ -366,12 +378,46 @@ function makeChip(widgetName) {
             persist();
             schedulePreview();
         });
-        // Stop drag on the slider so the chip doesn't grab from the input
         slider.addEventListener('mousedown', (e) => e.stopPropagation());
         slider.addEventListener('pointerdown', (e) => e.stopPropagation());
     }
 
+    // Spacer text + colour — also stop drag so the inputs are usable
+    const textInput = chip.querySelector('.chip-spacer-text');
+    const colorInput = chip.querySelector('.chip-spacer-color');
+    if (textInput) {
+        textInput.addEventListener('input', (e) => {
+            const o = state.layout[widgetName] || {};
+            o.text = e.target.value;
+            state.layout[widgetName] = o;
+            persist();
+            schedulePreview();
+        });
+        textInput.addEventListener('mousedown', (e) => e.stopPropagation());
+        textInput.addEventListener('pointerdown', (e) => e.stopPropagation());
+        textInput.addEventListener('dragstart', (e) => { e.stopPropagation(); e.preventDefault(); });
+        // Prevent the chip drag from catching text-input drags entirely
+        textInput.parentElement.addEventListener('dragstart', (e) => {
+            if (e.target === textInput) e.preventDefault();
+        });
+    }
+    if (colorInput) {
+        colorInput.addEventListener('input', (e) => {
+            const o = state.layout[widgetName] || {};
+            o.color = e.target.value;
+            state.layout[widgetName] = o;
+            persist();
+            schedulePreview();
+        });
+        colorInput.addEventListener('mousedown', (e) => e.stopPropagation());
+        colorInput.addEventListener('pointerdown', (e) => e.stopPropagation());
+    }
+
     return chip;
+}
+
+function escapeAttr(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 // ----------------------------------------------------------------------------
@@ -472,17 +518,16 @@ function schedulePreview(delay = 180) {
 }
 
 function buildBody() {
-    // Layout: only send overrides for enabled widgets; trim manifest defaults to keep payload small
+    // Layout: send the full per-widget override hash. The server forwards
+    // every field through to $env:CS_LAYOUT_OVERRIDE, and the bundled script
+    // copies non-reserved fields (anything but line/position/priority) into
+    // the widget's $state — so this carries barWidth, text, color, format,
+    // maxLen, etc. without per-field plumbing.
     const layoutPayload = {};
     for (const name of state.widgets) {
         const ov = state.layout[name];
         if (!ov) continue;
-        layoutPayload[name] = {
-            line: ov.line,
-            position: ov.position,
-            priority: ov.priority,
-            ...(ov.barWidth != null ? { barWidth: ov.barWidth } : {}),
-        };
+        layoutPayload[name] = { ...ov };
     }
     return {
         variant: state.variant,
