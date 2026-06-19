@@ -805,6 +805,7 @@ function wireButtons() {
     document.getElementById('btn-cancel').addEventListener('click', onCancel);
     document.getElementById('btn-reset').addEventListener('click', onReset);
     document.getElementById('btn-palette-reset').addEventListener('click', onPaletteReset);
+    document.getElementById('btn-clear-layout').addEventListener('click', onClearLayout);
 
     // Columns slider
     const colSlider = document.getElementById('columns-slider');
@@ -927,6 +928,16 @@ function onPaletteReset() {
     state.customPalette = {};
     renderCustomPaletteEditor();
     persist();
+    schedulePreview();
+}
+
+function onClearLayout() {
+    if (!state.instances.length) return;
+    if (!confirm('Remove every chip from the layout? The pool stays — drag from the left to rebuild.')) return;
+    state.instances = [];
+    persist();
+    renderLayout();
+    renderWidgetPool();
     schedulePreview();
 }
 

@@ -740,6 +740,10 @@ input[type=number]:focus {
     text-align: right;
     font-size: 0.82rem;
 }
+.columns-row .btn-sm {
+    margin-left: auto;
+    flex: 0 0 auto;
+}
 
 .layout-board {
     display: flex;
