@@ -49,6 +49,31 @@ const SPACER_WIDGETS = new Set(['spacer']);
 const MAX_LINES = 9;
 const MAX_COLUMNS = 12;
 
+// Per-widget primary palette role for the inline chip colour picker. Choosing
+// the role most visually distinctive for each widget so the picker actually
+// changes something the user can see in the preview.
+const PRIMARY_ROLE_BY_WIDGET = {
+    'core-header':             'C_MODEL',
+    'core-ctx':                'C_LABEL',
+    'core-rate-5h':            'C_LABEL',
+    'core-rate-wk':            'C_LABEL',
+    'core-work':               'C_TIME',
+    'sparkline-cost':          'C_GOLD',
+    'sparkline-ctx':           'C_GOLD',
+    'thinking':                'C_MODEL',
+    'output-style':            'C_TIME',
+    'session-fingerprint':     'C_MODEL',
+    'git-status':              'C_SKILL',
+    'pr-badge':                'C_MODEL',
+    'clock':                   'C_TIME',
+    'date':                    'C_TIME',
+    'cwd':                     'C_SKILL',
+    'token-breakdown':         'C_TIME',
+    'skill-audit-general':     'C_SKILL',
+    'skill-financial-modelling':'C_SKILL',
+    'skill-writing-tools':     'C_SKILL',
+};
+
 const state = {
     variant: 'Extended',
     palette: 'Sam',
@@ -285,6 +310,7 @@ async function init() {
     renderBarWidth();
     wireButtons();
     schedulePreview(0);
+    fetchWidgetPreviews();      // populates pool chip previews in the background
     setStatus('idle', 'idle');
 }
 
@@ -379,9 +405,11 @@ function renderPalettes() {
             document.querySelectorAll('.palette-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
             renderCustomPaletteEditor();
+            renderWidgetPool();           // refresh chips with loading state
             updatePaletteModPill();
             persist();
             schedulePreview();
+            fetchWidgetPreviews();
         });
         root.appendChild(card);
     }
@@ -433,6 +461,7 @@ function renderCustomPaletteEditor() {
             updatePaletteModPill();
             persist();
             schedulePreview();
+            fetchWidgetPreviews();   // debounced naturally: in-flight guard skips concurrent calls
         });
         root.appendChild(row);
     }
@@ -531,6 +560,15 @@ function makeChip(inst) {
     const idTag = dupCount > 1 ? `<span class="chip-id">#${inst.id.split('#')[1]}</span>` : '';
     let chipHtml = `<span class="chip-drag-handle" aria-hidden="true">⋮⋮</span><span class="chip-name">${inst.name}</span>${idTag}`;
 
+    // Per-instance primary tint — skip for spacer (it has its own .color)
+    const primaryRole = PRIMARY_ROLE_BY_WIDGET[inst.name];
+    if (!isSpacer && primaryRole) {
+        const tintValue = (inst.colors && inst.colors[primaryRole])
+            ? rgbTripleToHex(inst.colors[primaryRole])
+            : effectiveRoleHex(primaryRole);
+        chipHtml += `<input type="color" class="chip-tint" value="${tintValue}" title="${primaryRole} (per-chip override)" />`;
+    }
+
     if (isBar) {
         const barWidth = inst.barWidth ?? 24;
         chipHtml += `<input type="range" class="chip-bar-slider" min="6" max="50" step="1" value="${barWidth}" title="Bar width" />`;
@@ -593,6 +631,20 @@ function makeChip(inst) {
         colorInput.addEventListener('pointerdown', (e) => e.stopPropagation());
     }
 
+    // Per-chip tint picker
+    const tintInput = chip.querySelector('.chip-tint');
+    if (tintInput) {
+        tintInput.addEventListener('input', (e) => {
+            inst.colors = inst.colors || {};
+            inst.colors[primaryRole] = hexToRgbTriple(e.target.value);
+            persist();
+            schedulePreview();
+        });
+        tintInput.addEventListener('mousedown',   (e) => e.stopPropagation());
+        tintInput.addEventListener('pointerdown', (e) => e.stopPropagation());
+        tintInput.addEventListener('dragstart',   (e) => { e.stopPropagation(); e.preventDefault(); });
+    }
+
     // Remove × button
     const closeBtn = chip.querySelector('.chip-close');
     closeBtn.addEventListener('click', (e) => {
@@ -643,6 +695,7 @@ function makePoolChip(w) {
     chip.draggable = true;
     chip.dataset.widget = w.name;
     const count = instancesOf(w.name).length;
+    const cachedPreview = widgetPreviewCache[w.name];
     chip.innerHTML = `
         <div class="pool-chip-name">
             <strong>${w.name}</strong>
@@ -650,6 +703,11 @@ function makePoolChip(w) {
             <span class="pool-chip-line">L${w.line ?? '?'}</span>
         </div>
         <div class="pool-chip-desc">${w.description || ''}</div>
+        <div class="pool-chip-preview" data-widget-preview="${w.name}">${
+            cachedPreview != null
+                ? (cachedPreview || '<span class="pool-chip-preview-empty">no preview for this widget under mock data</span>')
+                : '<span class="pool-chip-preview-loading">rendering…</span>'
+        }</div>
     `;
     chip.addEventListener('dragstart', (e) => {
         dragInfo = { source: 'pool', name: w.name };
@@ -663,6 +721,51 @@ function makePoolChip(w) {
         dragInfo = null;
     });
     return chip;
+}
+
+// ----------------------------------------------------------------------------
+// Widget-preview cache + fetcher. Calls the batch /api/widget-previews
+// endpoint once per palette / custom-palette combo and patches each pool
+// chip's preview slot when the call returns.
+// ----------------------------------------------------------------------------
+let widgetPreviewCache = {};        // {name: html}  (current palette only)
+let widgetPreviewKey = '';          // serialised palette state — invalidates cache
+let widgetPreviewInFlight = false;
+
+async function fetchWidgetPreviews() {
+    if (!manifest) return;
+    const key = state.palette + '|' + JSON.stringify(state.customPalette || {});
+    if (key === widgetPreviewKey) return;
+    if (widgetPreviewInFlight) return;
+    widgetPreviewInFlight = true;
+    widgetPreviewKey = key;
+    widgetPreviewCache = {};
+    try {
+        const res = await fetch('/api/widget-previews', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                palette: state.palette,
+                customPalette: Object.keys(state.customPalette).length ? state.customPalette : null,
+            }),
+        });
+        const json = await res.json();
+        widgetPreviewCache = json.previews || {};
+        applyWidgetPreviews();
+    } catch (err) {
+        // leave the loading placeholders in place; the user can still drag
+    } finally {
+        widgetPreviewInFlight = false;
+    }
+}
+
+function applyWidgetPreviews() {
+    document.querySelectorAll('[data-widget-preview]').forEach(el => {
+        const name = el.getAttribute('data-widget-preview');
+        const html = widgetPreviewCache[name];
+        if (html == null) return;
+        el.innerHTML = html || '<span class="pool-chip-preview-empty">no preview for this widget under mock data</span>';
+    });
 }
 
 // ----------------------------------------------------------------------------

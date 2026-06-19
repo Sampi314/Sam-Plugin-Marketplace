@@ -202,14 +202,26 @@ function Clone-WidgetForInstance($base, $instanceId) {
 #   1. $env:CS_LAYOUT_OVERRIDE  (set by the web customizer for preview)
 #   2. ~/.claude/statusline-instances.json  (written by apply.ps1 for production)
 #   3. fall back to one instance per base manifest at its declared defaults
+#
+# Detect array-vs-object form from the JSON STRING (the source character),
+# not the parsed object, because PowerShell's pipeline unrolls single-element
+# arrays and a one-instance array would otherwise look like a PSCustomObject.
 $instanceSource = $null
+$instanceIsArray = $false
 if ($env:CS_LAYOUT_OVERRIDE) {
-    try { $instanceSource = $env:CS_LAYOUT_OVERRIDE | ConvertFrom-Json -ErrorAction Stop } catch {}
+    try {
+        $instanceSource  = $env:CS_LAYOUT_OVERRIDE | ConvertFrom-Json -ErrorAction Stop
+        $instanceIsArray = ([string]$env:CS_LAYOUT_OVERRIDE).TrimStart().StartsWith('[')
+    } catch {}
 }
 if (-not $instanceSource) {
     $instancesFile = Join-Path $ClaudeDir 'statusline-instances.json'
     if (Test-Path $instancesFile) {
-        try { $instanceSource = Get-Content $instancesFile -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop } catch {}
+        try {
+            $rawIns = Get-Content $instancesFile -Raw -Encoding UTF8
+            $instanceSource  = $rawIns | ConvertFrom-Json -ErrorAction Stop
+            $instanceIsArray = $rawIns.TrimStart().StartsWith('[')
+        } catch {}
     }
 }
 
@@ -219,7 +231,10 @@ if (-not $instanceSource) {
 #   - $null                                                    (one instance per base, defaults)
 $reservedLayoutKeys = @('id','name','line','position','priority','column')
 $widgets = @()
-if ($instanceSource -is [System.Collections.IList]) {
+if ($instanceIsArray) {
+    # Wrap in @() to defeat any pipeline unrolling — one-element arrays come
+    # through as PSCustomObject otherwise.
+    $instanceSource = @($instanceSource)
     foreach ($entry in $instanceSource) {
         if (-not $entry.name) { continue }
         $base = $baseManifests[[string]$entry.name]

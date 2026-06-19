@@ -1,4 +1,4 @@
-# ----------------------------------------------------------------------------
+﻿# ----------------------------------------------------------------------------
 # widgets/060-core-rate-5h.ps1 — 5-hour rate-limit bar (Bundle A)
 # Uses data.rate_limits.five_hour if present, else falls back to OAuth API.
 # ----------------------------------------------------------------------------
@@ -50,8 +50,11 @@
         }
         $bar += $colors.C_RESET
 
-        # Reset countdown
+        # Reset countdown + absolute local-time clock (e.g. '↻ 2h 35m | @18:30').
+        # The clock shows whenever we can parse a target; the countdown only
+        # shows when the target is still in the future.
         $resetStr = '--'
+        $resetClock = ''
         if ($rl.five_hour.resets_at) {
             try {
                 $target = $null
@@ -62,15 +65,18 @@
                 } else {
                     $target = [DateTimeOffset]::Parse($s)
                 }
-                $diff = $target - [DateTimeOffset]::UtcNow
-                if ($diff.TotalSeconds -gt 0) {
-                    $resetStr = "$([math]::Floor($diff.TotalHours))h $($diff.Minutes)m"
+                if ($target) {
+                    $resetClock = "$($colors.C_DIM) | @$($target.ToLocalTime().ToString('HH:mm'))$($colors.C_RESET)"
+                    $diff = $target - [DateTimeOffset]::UtcNow
+                    if ($diff.TotalSeconds -gt 0) {
+                        $resetStr = "$([math]::Floor($diff.TotalHours))h $($diff.Minutes)m"
+                    }
                 }
             } catch {}
         }
 
         $pctStr = '{0,5:N1}%' -f $pct
         $srcTag = if ($rl.source -eq 'oauth-fallback') { "$($colors.C_DIM)*$($colors.C_RESET)" } else { '' }
-        return "$($colors.C_LABEL)5H :$($colors.C_RESET) $bar $pctStr$srcTag $($colors.C_DIM)$([char]0x21BB) $resetStr$($colors.C_RESET)"
+        return "$($colors.C_LABEL)5H :$($colors.C_RESET) $bar $pctStr$srcTag $($colors.C_DIM)$([char]0x21BB) $resetStr$($colors.C_RESET)$resetClock"
     }
 }

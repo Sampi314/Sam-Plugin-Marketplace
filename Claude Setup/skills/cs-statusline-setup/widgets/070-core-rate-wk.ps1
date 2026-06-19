@@ -1,4 +1,4 @@
-# ----------------------------------------------------------------------------
+﻿# ----------------------------------------------------------------------------
 # widgets/070-core-rate-wk.ps1 — weekly rate-limit bar (Bundle A)
 # ----------------------------------------------------------------------------
 
@@ -49,7 +49,11 @@
         }
         $bar += $colors.C_RESET
 
+        # Reset countdown + absolute local-time clock (e.g. '↻ 5d 12h | @Mon 09:00')
+        # The clock shows whenever we can parse a target; the countdown only
+        # shows when the target is still in the future.
         $resetStr = '--'
+        $resetClock = ''
         if ($rl.seven_day.resets_at) {
             try {
                 $target = $null
@@ -60,16 +64,19 @@
                 } else {
                     $target = [DateTimeOffset]::Parse($s)
                 }
-                $diff = $target - [DateTimeOffset]::UtcNow
-                if ($diff.TotalSeconds -gt 0) {
-                    $days = [math]::Floor($diff.TotalDays)
-                    $resetStr = "${days}d $($diff.Hours)h"
+                if ($target) {
+                    $resetClock = "$($colors.C_DIM) | @$($target.ToLocalTime().ToString('ddd HH:mm'))$($colors.C_RESET)"
+                    $diff = $target - [DateTimeOffset]::UtcNow
+                    if ($diff.TotalSeconds -gt 0) {
+                        $days = [math]::Floor($diff.TotalDays)
+                        $resetStr = "${days}d $($diff.Hours)h"
+                    }
                 }
             } catch {}
         }
 
         $pctStr = '{0,5:N1}%' -f $pct
         $srcTag = if ($rl.source -eq 'oauth-fallback') { "$($colors.C_DIM)*$($colors.C_RESET)" } else { '' }
-        return "$($colors.C_LABEL)WK :$($colors.C_RESET) $bar $pctStr$srcTag $($colors.C_DIM)$([char]0x21BB) $resetStr$($colors.C_RESET)"
+        return "$($colors.C_LABEL)WK :$($colors.C_RESET) $bar $pctStr$srcTag $($colors.C_DIM)$([char]0x21BB) $resetStr$($colors.C_RESET)$resetClock"
     }
 }

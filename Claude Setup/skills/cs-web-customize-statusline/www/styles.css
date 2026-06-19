@@ -356,7 +356,7 @@ header.hero::after {
 }
 
 .preview-banner-inner {
-    max-width: 1100px;
+    max-width: 1400px;
     margin: 0 auto;
 }
 
@@ -489,9 +489,16 @@ header.hero::after {
 /* === Main / sections ==================================================== */
 
 main {
-    max-width: 1100px;
+    max-width: 1280px;
     margin: 0 auto;
-    padding: 56px 24px 80px;
+    padding: 48px 24px 80px;
+}
+
+/* Compose section is the workspace — let it spread wider than other sections */
+#layout-section {
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 section {
@@ -570,19 +577,19 @@ input[type=number]:focus {
 
 .compose-grid {
     display: grid;
-    grid-template-columns: 240px 1fr;
-    gap: 18px;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
     align-items: start;
 }
 
 .widget-pool {
     position: sticky;
-    top: 220px;                          /* below sticky preview banner */
+    top: 260px;                          /* below sticky preview banner */
     background: var(--bg-card-alt);
     border: 1px solid var(--border);
     border-radius: 2px;
-    padding: 14px 12px;
-    max-height: calc(100vh - 240px);
+    padding: 16px 14px;
+    max-height: calc(100vh - 280px);
     overflow-y: auto;
 }
 
@@ -672,6 +679,29 @@ input[type=number]:focus {
     line-height: 1.4;
 }
 
+.pool-chip-preview {
+    margin-top: 4px;
+    background: #06070a;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 6px 8px;
+    overflow-x: auto;
+    max-height: 64px;
+}
+[data-theme="light"] .pool-chip-preview { background: #fffefb; }
+.pool-chip-preview .statusline {
+    font-size: 0.66rem;
+    line-height: 1.55;
+}
+.pool-chip-preview-loading,
+.pool-chip-preview-empty {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    opacity: 0.6;
+}
+
 @media (max-width: 900px) {
     .compose-grid { grid-template-columns: 1fr; }
     .widget-pool {
@@ -729,8 +759,8 @@ input[type=number]:focus {
     background: var(--bg-card-alt);
     border: 1px dashed var(--border);
     border-radius: 2px;
-    padding: 6px;
-    min-height: 44px;
+    padding: 8px;
+    min-height: 56px;
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
@@ -843,6 +873,18 @@ input[type=number]:focus {
     border-radius: 2px;
     cursor: pointer;
     padding: 0;
+}
+
+.layout-chip .chip-tint {
+    width: 18px; height: 16px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    cursor: pointer;
+    padding: 0;
+    background: var(--bg-card-alt);
+}
+.layout-chip .chip-tint:hover {
+    border-color: var(--accent);
 }
 
 .layout-chip .chip-close {
