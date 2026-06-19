@@ -90,9 +90,30 @@ function Invoke-WidgetRender {
         }
     }
 
+    # Merge per-instance colour overrides on top of the global $Colors. Each
+    # instance can carry $state.colors = {C_MODEL: 'R G B' or '#xxx', ...}
+    # which lets duplicate instances render in different colours.
+    $effectiveColors = $Colors
+    if ($Widget.State -and $Widget.State.colors) {
+        $effectiveColors = @{}
+        foreach ($k in $Colors.Keys) { $effectiveColors[$k] = $Colors[$k] }
+        foreach ($prop in $Widget.State.colors.PSObject.Properties) {
+            $key = $prop.Name
+            if (-not $effectiveColors.ContainsKey($key)) { continue }
+            $v = [string]$prop.Value
+            $rgb = $null
+            if ($v -match '^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$') {
+                $rgb = @([Convert]::ToInt32($Matches[1],16), [Convert]::ToInt32($Matches[2],16), [Convert]::ToInt32($Matches[3],16))
+            } elseif ($v -match '^\s*(\d+)\s+(\d+)\s+(\d+)\s*$') {
+                $rgb = @([int]$Matches[1], [int]$Matches[2], [int]$Matches[3])
+            }
+            if ($rgb) { $effectiveColors[$key] = $Ansi.Fg($rgb[0], $rgb[1], $rgb[2]) }
+        }
+    }
+
     $output = ''
     try {
-        $output = & $Widget.Render $Ctx $Caps $Colors $Ansi $Widget.State
+        $output = & $Widget.Render $Ctx $Caps $effectiveColors $Ansi $Widget.State
         if ($null -eq $output) { $output = '' }
         $output = [string]$output
     } catch {
@@ -152,7 +173,9 @@ function Render-Statusline {
     # 'full' wins the line. Otherwise: left is left-edge, right is right-edge,
     # center is positioned at terminal midpoint. Padding between bands is at
     # least one space; if widgets don't fit, padding collapses to one space.
-    $byLine = $rendered | Group-Object { $_.Widget.Line } | Sort-Object Name
+    # Sort numerically — Group-Object names are strings, so a default Sort would
+    # order line 10 before line 2 ("10" < "2" lex).
+    $byLine = $rendered | Group-Object { $_.Widget.Line } | Sort-Object { [int]$_.Name }
     $sep = "$($Ansi.Fg(80,80,100)) | $($Ansi.Reset())"
     $lines = @()
     foreach ($lineGroup in $byLine) {

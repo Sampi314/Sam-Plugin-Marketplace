@@ -359,6 +359,52 @@ while (-not $shouldStop) {
                 }
                 Send-StringResponse -Response $res -Body ($manifest | ConvertTo-Json -Depth 10 -Compress) -ContentType 'application/json; charset=utf-8'
             }
+            '^POST /api/widget-previews$' {
+                $bodyText = Read-RequestBody -Request $req
+                $body = $bodyText | ConvertFrom-Json
+                # Render every widget on its own line, prefixed with a marker
+                # spacer (invisible-coloured text "##name##"). One statusline
+                # invocation, then per-line: grep the marker, strip prefix,
+                # return clean HTML per widget.
+                $widgetNames = @((Get-WidgetManifest | Where-Object { $_.name -ne 'mode-aware' }).name)
+                $instanceArr = @()
+                $lineNo = 1
+                foreach ($n in $widgetNames) {
+                    $instanceArr += ,@{ id="m-$lineNo"; name='spacer'; line=$lineNo; position='left'; priority=1; text="##$n##"; color='#000001' }
+                    $instanceArr += ,@{ id="w-$lineNo"; name=$n;     line=$lineNo; position='left'; priority=10 }
+                    if ($n -eq 'spacer') {
+                        # The widget itself is a spacer — give it actual text so the demo line is non-empty
+                        $instanceArr[-1].text = '|'
+                        $instanceArr[-1].color = '#888888'
+                    }
+                    $lineNo++
+                }
+                $instanceArr += ,@{ id='mode-aware'; name='mode-aware'; line=999; position='left'; priority=99 }
+
+                $html = Render-Preview `
+                    -Variant 'Extended' `
+                    -Instances $instanceArr `
+                    -Palette ([string]$body.palette) `
+                    -BarWidth 24 `
+                    -Lines 'all' `
+                    -CustomPalette $body.customPalette
+
+                $previews = @{}
+                foreach ($n in $widgetNames) { $previews[$n] = '' }
+                if ($html -match '(?s)<pre class="statusline">(.*?)</pre>') {
+                    $inner = $Matches[1]
+                    foreach ($lineHtml in ($inner -split "`n")) {
+                        if ($lineHtml -match '##([\w-]+)##') {
+                            $wn = $Matches[1]
+                            # Strip the marker span + the host's ` | ` separator span.
+                            $stripped = $lineHtml -replace '<span[^>]*>##[\w-]+##</span>\s*<span[^>]*>\s*\|\s*</span>\s*', ''
+                            $previews[$wn] = '<pre class="statusline">' + $stripped + '</pre>'
+                        }
+                    }
+                }
+                $payload = @{ previews = $previews } | ConvertTo-Json -Depth 5 -Compress
+                Send-StringResponse -Response $res -Body $payload -ContentType 'application/json; charset=utf-8'
+            }
             '^POST /api/preview$' {
                 $bodyText = Read-RequestBody -Request $req
                 $body = $bodyText | ConvertFrom-Json
