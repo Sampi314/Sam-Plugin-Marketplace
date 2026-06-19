@@ -133,14 +133,17 @@ function Render-Statusline {
         }
     }
 
-    # Second pass: let any 'mode-aware' widget mutate the rendered set
-    # Widgets with $w.Mutate set are called after all primary renders;
-    # they receive the rendered array and can reassign Line/Position/etc.
-    foreach ($r in $rendered) {
-        if ($r.Widget.Mutate) {
-            try { & $r.Widget.Mutate $rendered $Ctx $Caps } catch {}
+    # Second pass: let any widget with a Mutate callback rewrite the rendered set.
+    # We iterate over $Widgets (not $rendered) so that mutation-only widgets like
+    # mode-aware (whose Render returns '') still get their Mutate called.
+    foreach ($w in $Widgets) {
+        if ($w.Mutate) {
+            try { & $w.Mutate $rendered $Ctx $Caps } catch {}
         }
     }
+
+    # Drop any rendered entries that Mutate cleared to empty
+    $rendered = @($rendered | Where-Object { -not [string]::IsNullOrEmpty($_.Output) })
 
     # Group by line and lay out
     $byLine = $rendered | Group-Object { $_.Widget.Line } | Sort-Object Name
